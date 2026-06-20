@@ -1,4 +1,4 @@
-import type { CoachAnalysis, Platform } from './types';
+import type { AnalyzeResponse, CoachAnalysis, Platform } from './types';
 
 export async function getSample(): Promise<{ player: string; pgn: string }> {
   const response = await fetch('/api/sample');
@@ -6,26 +6,24 @@ export async function getSample(): Promise<{ player: string; pgn: string }> {
   return response.json();
 }
 
-export async function analyzeGame(pgn: string, player: string): Promise<CoachAnalysis> {
+export async function analyzeGames(pgn: string, player: string, maxGames: number): Promise<AnalyzeResponse> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pgn, player, max_games: 1 })
+    body: JSON.stringify({ pgn, player, max_games: maxGames })
   });
   if (!response.ok) throw new Error('Analysis failed');
-  const payload = await response.json();
-  return payload.analyses[0];
+  return response.json();
 }
 
-export async function importGames(username: string, platform: Platform): Promise<CoachAnalysis> {
+export async function importGames(username: string, platform: Platform, maxGames: number): Promise<AnalyzeResponse> {
   const response = await fetch('/api/import', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, platform, max_games: 1 })
+    body: JSON.stringify({ username, platform, max_games: maxGames })
   });
   if (!response.ok) throw new Error(`Could not import games from ${platform}`);
-  const payload = await response.json();
-  return payload.analyses[0];
+  return response.json();
 }
 
 export async function askCoach(question: string, analysis: CoachAnalysis | null): Promise<string> {

@@ -53,17 +53,25 @@ class EngineAnalyzer:
     def __init__(self, depth: int = 9, engine_path: str | None = None) -> None:
         self.depth = depth
         self.engine_path = engine_path or stockfish_path()
+        self._engine: chess.engine.SimpleEngine | None = None
+
+    def close(self) -> None:
+        if self._engine:
+            self._engine.quit()
+            self._engine = None
 
     def analyse(self, board: chess.Board, pov: bool) -> EngineLine:
         if not self.engine_path:
             return EngineLine(best_move=_fallback_best_move(board), score_cp=simple_position_score(board, pov))
         try:
-            with chess.engine.SimpleEngine.popen_uci(self.engine_path) as engine:
-                info = engine.analyse(board, chess.engine.Limit(depth=self.depth))
-                score = info["score"].pov(pov).score(mate_score=100000)
-                pv = info.get("pv", [])
-                return EngineLine(best_move=pv[0] if pv else None, score_cp=score)
+            if self._engine is None:
+                self._engine = chess.engine.SimpleEngine.popen_uci(self.engine_path)
+            info = self._engine.analyse(board, chess.engine.Limit(depth=self.depth))
+            score = info["score"].pov(pov).score(mate_score=100000)
+            pv = info.get("pv", [])
+            return EngineLine(best_move=pv[0] if pv else None, score_cp=score)
         except Exception:
+            self.close()
             return EngineLine(best_move=_fallback_best_move(board), score_cp=simple_position_score(board, pov))
 
 

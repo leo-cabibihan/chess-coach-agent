@@ -1,21 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertCircle, Database, Loader2, MessageCircle, Upload } from 'lucide-react';
 import { AnalysisPanel } from './components/AnalysisPanel';
+import { GameList } from './components/GameList';
 import { GamePanel } from './components/GamePanel';
-import { analyzeGame, askCoach, getSample, importGames } from './lib/api';
+import { analyzeGames, askCoach, getSample, importGames } from './lib/api';
 import type { CoachAnalysis, CriticalMoment, Platform } from './lib/types';
 import './styles.css';
 
 function App() {
   const [pgn, setPgn] = useState('');
   const [player, setPlayer] = useState('kfctofu');
-  const [analysis, setAnalysis] = useState<CoachAnalysis | null>(null);
+  const [analyses, setAnalyses] = useState<CoachAnalysis[]>([]);
+  const [activeGameIndex, setActiveGameIndex] = useState(0);
   const [selectedMoment, setSelectedMoment] = useState<CriticalMoment | null>(null);
   const [currentPly, setCurrentPly] = useState(0);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('Ready');
   const [error, setError] = useState('');
   const [platform, setPlatform] = useState<Platform>('chess.com');
+  const [maxGames, setMaxGames] = useState(10);
   const [question, setQuestion] = useState('');
   const [coachAnswer, setCoachAnswer] = useState('');
 
@@ -25,6 +28,8 @@ function App() {
       setPlayer(sample.player);
     }).catch(() => undefined);
   }, []);
+
+  const analysis = analyses[activeGameIndex] || null;
 
   const headline = useMemo(() => {
     if (!analysis) return 'Personal chess improvement from your own games';
@@ -42,17 +47,25 @@ function App() {
     ];
   }, [analysis]);
 
+  function activateGame(index: number, nextAnalyses = analyses) {
+    const next = nextAnalyses[index] || null;
+    setActiveGameIndex(index);
+    setSelectedMoment(next?.moments[0] || null);
+    setCurrentPly(next?.moments[0]?.ply || 0);
+    setCoachAnswer('');
+  }
+
   async function runAnalysis() {
     setLoading(true);
     setError('');
-    setStatus('Analyzing PGN...');
+    setStatus(`Analyzing up to ${maxGames} PGN games...`);
     setCoachAnswer('');
     try {
-      const result = await analyzeGame(pgn, player);
-      setAnalysis(result);
-      setSelectedMoment(result.moments[0] || null);
-      setCurrentPly(result.moments[0]?.ply || 0);
-      setStatus(`Found ${result.moments.length} coachable moments`);
+      const result = await analyzeGames(pgn, player, maxGames);
+      setAnalyses(result.analyses);
+      activateGame(0, result.analyses);
+      const totalMoments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
+      setStatus(`Analyzed ${result.analyses.length} games with ${totalMoments} coachable moments`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
       setStatus('Could not analyze PGN');
@@ -65,14 +78,14 @@ function App() {
     if (!player.trim()) return;
     setLoading(true);
     setError('');
-    setStatus(`Importing latest ${platform} game...`);
+    setStatus(`Importing ${maxGames} recent ${platform} games...`);
     setCoachAnswer('');
     try {
-      const result = await importGames(player, platform);
-      setAnalysis(result);
-      setSelectedMoment(result.moments[0] || null);
-      setCurrentPly(result.moments[0]?.ply || 0);
-      setStatus(`Imported ${platform} game and found ${result.moments.length} moments`);
+      const result = await importGames(player, platform, maxGames);
+      setAnalyses(result.analyses);
+      activateGame(0, result.analyses);
+      const totalMoments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
+      setStatus(`Imported ${result.analyses.length} ${platform} games with ${totalMoments} moments`);
     } catch (err) {
       setError(err instanceof Error ? err.message : `Could not import from ${platform}`);
       setStatus('Import failed');
@@ -128,6 +141,14 @@ function App() {
             <option value="lichess">Lichess</option>
           </select>
         </label>
+        <label>
+          Games
+          <select value={maxGames} onChange={(event) => setMaxGames(Number(event.target.value))}>
+            <option value={5}>5 recent</option>
+            <option value={10}>10 recent</option>
+            <option value={20}>20 recent</option>
+          </select>
+        </label>
         <label className="pgn-input">
           PGN input
           <textarea value={pgn} onChange={(event) => setPgn(event.target.value)} rows={4} />
@@ -135,11 +156,13 @@ function App() {
         <div className="input-actions">
           <button className="secondary" onClick={runImport} disabled={loading || !player.trim()}>
             <Database size={16} />
-            Import latest
+            Import games
           </button>
           <span className={error ? 'status error' : 'status'}>{error ? <AlertCircle size={15} /> : null}{error || status}</span>
         </div>
       </section>
+
+      <GameList analyses={analyses} activeIndex={activeGameIndex} onSelect={activateGame} />
 
       <div className="layout">
         <AnalysisPanel analysis={analysis} selectedMoment={selectedMoment} onSelectMoment={(moment) => {

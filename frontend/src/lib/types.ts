@@ -54,4 +54,9 @@ export type CoachAnalysis = {
   retrieval_notes: string[];
 };
 
+export type AnalyzeResponse = {
+  analyses: CoachAnalysis[];
+  generated_at: string;
+};
+
 export type Platform = 'chess.com' | 'lichess';

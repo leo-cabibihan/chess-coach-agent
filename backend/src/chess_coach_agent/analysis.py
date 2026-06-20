@@ -57,77 +57,80 @@ def analyze_parsed_game(parsed: ParsedGame, player: str = "kfctofu", max_moments
     moments: list[CriticalMoment] = []
     queen_moves = 0
 
-    for move_record, move in zip(parsed.moves, parsed.game.mainline_moves(), strict=False):
-        before = board.copy(stack=False)
-        mover = before.turn
-        played_san = before.san(move)
-        before_line = analyzer.analyse(before, player_color)
-        best_san = before.san(before_line.best_move) if before_line.best_move in before.legal_moves else None
-        board.push(move)
-        after = board.copy(stack=False)
-        after_line = analyzer.analyse(after, player_color)
+    try:
+        for move_record, move in zip(parsed.moves, parsed.game.mainline_moves(), strict=False):
+            before = board.copy(stack=False)
+            mover = before.turn
+            played_san = before.san(move)
+            before_line = analyzer.analyse(before, player_color)
+            best_san = before.san(before_line.best_move) if before_line.best_move in before.legal_moves else None
+            board.push(move)
+            after = board.copy(stack=False)
+            after_line = analyzer.analyse(after, player_color)
 
-        if mover != player_color:
-            continue
+            if mover != player_color:
+                continue
 
-        swing = None
-        if before_line.score_cp is not None and after_line.score_cp is not None:
-            swing = (before_line.score_cp - after_line.score_cp) / 100
+            swing = None
+            if before_line.score_cp is not None and after_line.score_cp is not None:
+                swing = (before_line.score_cp - after_line.score_cp) / 100
 
-        theme = ""
-        severity = 0.0
-        moving_piece = before.piece_at(move.from_square)
-        loose_value = _undefended_attacked_value(after, player_color)
-        if loose_value >= 300:
-            theme = "loose_piece"
-            severity = loose_value / 100
-        if swing is not None and swing >= 1.2 and not theme:
-            theme = "missed_tactic"
-            severity = max(severity, swing)
-        if board.fullmove_number <= 12 and moving_piece and moving_piece.piece_type == chess.QUEEN:
-            queen_moves += 1
-            if queen_moves >= 2 and not theme:
-                theme = "opening_drift"
-                severity = 2.0 + queen_moves
-        if before.fullmove_number >= 10 and not _castled(after, player_color) and not theme:
-            theme = "king_safety"
-            severity = 2.0
-        if phase_for_board(after) == "endgame" and swing is not None and swing >= 0.8 and not theme:
-            theme = "endgame_conversion"
-            severity = swing
-        if not theme:
-            continue
+            theme = ""
+            severity = 0.0
+            moving_piece = before.piece_at(move.from_square)
+            loose_value = _undefended_attacked_value(after, player_color)
+            if loose_value >= 300:
+                theme = "loose_piece"
+                severity = loose_value / 100
+            if swing is not None and swing >= 1.2 and not theme:
+                theme = "missed_tactic"
+                severity = max(severity, swing)
+            if board.fullmove_number <= 12 and moving_piece and moving_piece.piece_type == chess.QUEEN:
+                queen_moves += 1
+                if queen_moves >= 2 and not theme:
+                    theme = "opening_drift"
+                    severity = 2.0 + queen_moves
+            if before.fullmove_number >= 10 and not _castled(after, player_color) and not theme:
+                theme = "king_safety"
+                severity = 2.0
+            if phase_for_board(after) == "endgame" and swing is not None and swing >= 0.8 and not theme:
+                theme = "endgame_conversion"
+                severity = swing
+            if not theme:
+                continue
 
-        fen_best = None
-        if before_line.best_move in before.legal_moves:
-            best_board = before.copy(stack=False)
-            best_board.push(before_line.best_move)
-            fen_best = best_board.fen()
-        summary, what, better, drill = _moment_text(theme, played_san, best_san, swing)
-        moments.append(
-            CriticalMoment(
-                id=f"{parsed.game_id}-{move_record.ply}",
-                game_id=parsed.game_id,
-                ply=move_record.ply,
-                move_number=move_record.move_number,
-                phase=phase_for_board(before),  # type: ignore[arg-type]
-                theme=theme,
-                played_san=played_san,
-                best_san=best_san,
-                fen_before=before.fen(),
-                fen_after=after.fen(),
-                fen_best=fen_best,
-                eval_before=before_line.score_cp / 100 if before_line.score_cp is not None else None,
-                eval_after=after_line.score_cp / 100 if after_line.score_cp is not None else None,
-                eval_swing=swing,
-                severity=round(severity, 2),
-                summary=summary,
-                what_happened=what,
-                better_plan=better,
-                principle=THEME_PRINCIPLES.get(theme, THEME_PRINCIPLES["missed_tactic"]),
-                drill_prompt=drill,
+            fen_best = None
+            if before_line.best_move in before.legal_moves:
+                best_board = before.copy(stack=False)
+                best_board.push(before_line.best_move)
+                fen_best = best_board.fen()
+            summary, what, better, drill = _moment_text(theme, played_san, best_san, swing)
+            moments.append(
+                CriticalMoment(
+                    id=f"{parsed.game_id}-{move_record.ply}",
+                    game_id=parsed.game_id,
+                    ply=move_record.ply,
+                    move_number=move_record.move_number,
+                    phase=phase_for_board(before),  # type: ignore[arg-type]
+                    theme=theme,
+                    played_san=played_san,
+                    best_san=best_san,
+                    fen_before=before.fen(),
+                    fen_after=after.fen(),
+                    fen_best=fen_best,
+                    eval_before=before_line.score_cp / 100 if before_line.score_cp is not None else None,
+                    eval_after=after_line.score_cp / 100 if after_line.score_cp is not None else None,
+                    eval_swing=swing,
+                    severity=round(severity, 2),
+                    summary=summary,
+                    what_happened=what,
+                    better_plan=better,
+                    principle=THEME_PRINCIPLES.get(theme, THEME_PRINCIPLES["missed_tactic"]),
+                    drill_prompt=drill,
+                )
             )
-        )
+    finally:
+        analyzer.close()
 
     moments = sorted(moments, key=lambda m: m.severity, reverse=True)[:max_moments]
     if not moments and parsed.moves:
