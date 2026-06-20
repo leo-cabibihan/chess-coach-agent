@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from .agent import ChessCoachAgent, sample_pgn
 from .importers import fetch_platform_pgn, preview_pgn_games
@@ -29,11 +33,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/")
-def root() -> RedirectResponse:
-    return RedirectResponse("http://127.0.0.1:5173/")
 
 
 @app.get("/api/health")
@@ -90,3 +89,24 @@ def monitoring() -> dict:
 @app.get("/api/trends")
 def trends() -> dict:
     return agent.generate_trend_summary(sample_pgn(), player="kfctofu").model_dump()
+
+
+frontend_value = os.getenv("FRONTEND_DIST", "")
+frontend_dist = Path(frontend_value) if frontend_value else None
+if frontend_dist and (frontend_dist / "index.html").exists():
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend-assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def frontend(full_path: str):
+        if full_path.startswith("api/"):
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        requested = (frontend_dist / full_path).resolve()
+        if requested.is_relative_to(frontend_dist.resolve()) and requested.is_file():
+            return FileResponse(requested)
+        return FileResponse(frontend_dist / "index.html")
+else:
+    @app.get("/", include_in_schema=False)
+    def local_frontend() -> RedirectResponse:
+        return RedirectResponse("http://127.0.0.1:5173/")

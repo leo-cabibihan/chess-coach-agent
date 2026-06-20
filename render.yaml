@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: chess-coach-agent
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: minimax/minimax-m3
+      - key: STOCKFISH_DEPTH
+        value: "7"
+      - key: MONITORING_LOG_PATH
+        value: /tmp/chess-coach-events.jsonl

@@ -50,8 +50,8 @@ def simple_position_score(board: chess.Board, pov: bool) -> int:
 
 
 class EngineAnalyzer:
-    def __init__(self, depth: int = 9, engine_path: str | None = None) -> None:
-        self.depth = depth
+    def __init__(self, depth: int | None = None, engine_path: str | None = None) -> None:
+        self.depth = depth if depth is not None else int(os.getenv("STOCKFISH_DEPTH", "9"))
         self.engine_path = engine_path or stockfish_path()
         self._engine: chess.engine.SimpleEngine | None = None
 

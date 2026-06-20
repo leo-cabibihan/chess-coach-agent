@@ -2,13 +2,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 
-LOG_PATH = Path(__file__).resolve().parents[2] / "data" / "logs" / "events.jsonl"
+LOG_PATH = Path(
+    os.getenv(
+        "MONITORING_LOG_PATH",
+        str(Path(__file__).resolve().parents[2] / "data" / "logs" / "events.jsonl"),
+    )
+)
 
 
 def log_event(event_type: str, payload: dict[str, Any]) -> None:

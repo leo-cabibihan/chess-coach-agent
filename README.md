@@ -90,6 +90,21 @@ Docker:
 docker compose up --build
 ```
 
+## Cloud Deployment
+
+The root `Dockerfile` builds the React app, installs Stockfish, and serves the frontend and FastAPI
+from one container. `render.yaml` defines a Render web service with `/api/health` checks.
+
+1. Push this repository to GitHub.
+2. Rotate the OpenRouter key if it has ever been shared, then keep the replacement out of Git.
+3. In Render, create a **Blueprint** from the repository. Render reads `render.yaml` and prompts for
+   `OPENROUTER_API_KEY` because it is declared with `sync: false`.
+4. Deploy and verify `/api/health`, `/analyze`, game preview, selected-game analysis, and coach chat.
+
+The free configuration stores monitoring JSONL under `/tmp`, so metrics reset when the service
+restarts or redeploys. For persistent monitoring, attach a paid disk at `/var/data` and set
+`MONITORING_LOG_PATH=/var/data/events.jsonl`, or move events to managed Postgres.
+
 ## OpenRouter
 
 The app works without a model key by using deterministic coach text. To enable LLM commentary:
