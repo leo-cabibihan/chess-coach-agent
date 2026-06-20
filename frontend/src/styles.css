@@ -12,7 +12,7 @@ body {
   margin: 0;
 }
 
-button, input, textarea {
+button, input, textarea, select {
   font: inherit;
 }
 
@@ -45,7 +45,7 @@ h1 {
   letter-spacing: 0;
 }
 
-.primary, .chat-row button, .board-controls button, .moment-tabs button {
+.primary, .secondary, .chat-row button, .board-controls button, .moment-tabs button {
   border: 0;
   border-radius: 8px;
   cursor: pointer;
@@ -62,7 +62,19 @@ h1 {
   box-shadow: 0 8px 24px rgba(25, 135, 84, 0.22);
 }
 
-.primary:disabled, .chat-row button:disabled {
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 14px;
+  color: #1e2935;
+  background: #ffffff;
+  border: 1px solid #cfd9e4;
+}
+
+.primary:disabled, .secondary:disabled, .chat-row button:disabled, .board-controls button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -77,9 +89,10 @@ h1 {
 
 .input-strip {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px 170px 1fr;
   gap: 16px;
   margin-bottom: 22px;
+  align-items: end;
 }
 
 label {
@@ -90,7 +103,7 @@ label {
   font-weight: 700;
 }
 
-input, textarea {
+input, textarea, select {
   border: 1px solid #ced8e4;
   border-radius: 8px;
   padding: 11px 12px;
@@ -100,6 +113,47 @@ input, textarea {
 
 textarea {
   resize: vertical;
+}
+
+.pgn-input {
+  grid-column: span 1;
+}
+
+.input-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 42px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #4c5a67;
+  font-weight: 700;
+}
+
+.status.error {
+  color: #b4232d;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.stat-row span {
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  color: #4b5a68;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .layout {
@@ -329,6 +383,7 @@ textarea {
 
 .board-controls {
   display: flex;
+  align-items: center;
   gap: 9px;
   margin-bottom: 18px;
 }
@@ -338,6 +393,14 @@ textarea {
   height: 34px;
   background: #f0f2f4;
   color: #27313a;
+}
+
+.ply-counter {
+  min-width: 64px;
+  text-align: center;
+  color: #52606f;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .move-history {
@@ -387,9 +450,14 @@ textarea {
   font-weight: 700;
 }
 
-.move-row button.highlight {
+.move-row button.current {
   background: #1f8fe5;
   color: white;
+}
+
+.move-row button.moment-mark:not(.current) {
+  border-color: #f3c36f;
+  background: #fff7e9;
 }
 
 .coach-chat {
@@ -403,6 +471,10 @@ textarea {
 }
 
 .chat-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #222b35;
   color: white;
 }
@@ -424,6 +496,10 @@ textarea {
   .app-header, .input-strip, .layout, .move-comparison, .chat-row {
     grid-template-columns: 1fr;
     display: grid;
+  }
+  .input-actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .moment-tabs {
     grid-template-columns: repeat(2, 1fr);

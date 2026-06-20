@@ -1,4 +1,4 @@
-import type { CoachAnalysis } from './types';
+import type { CoachAnalysis, Platform } from './types';
 
 export async function getSample(): Promise<{ player: string; pgn: string }> {
   const response = await fetch('/api/sample');
@@ -13,6 +13,17 @@ export async function analyzeGame(pgn: string, player: string): Promise<CoachAna
     body: JSON.stringify({ pgn, player, max_games: 1 })
   });
   if (!response.ok) throw new Error('Analysis failed');
+  const payload = await response.json();
+  return payload.analyses[0];
+}
+
+export async function importGames(username: string, platform: Platform): Promise<CoachAnalysis> {
+  const response = await fetch('/api/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, platform, max_games: 1 })
+  });
+  if (!response.ok) throw new Error(`Could not import games from ${platform}`);
   const payload = await response.json();
   return payload.analyses[0];
 }

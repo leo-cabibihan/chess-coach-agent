@@ -13,11 +13,14 @@ export function GamePanel({
   currentPly: number;
   setCurrentPly: (ply: number) => void;
 }) {
-  const fen =
-    selectedMoment?.fen_before ||
-    analysis?.moves[Math.max(0, Math.min(currentPly - 1, analysis.moves.length - 1))]?.fen_after ||
-    'rn1qkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3';
   const moves = analysis?.moves || [];
+  const clampedPly = Math.max(0, Math.min(currentPly, moves.length));
+  const fallbackFen = 'rn1qkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3';
+  const fen =
+    (clampedPly === 0
+      ? moves[0]?.fen_before
+      : moves[clampedPly - 1]?.fen_after) || fallbackFen;
+  const selectedMomentIds = new Set(analysis?.moments.map((moment) => moment.ply) || []);
 
   return (
     <section className="panel game-panel">
@@ -34,10 +37,11 @@ export function GamePanel({
         <small>White</small>
       </div>
       <div className="board-controls">
-        <button onClick={() => setCurrentPly(0)}><ChevronsLeft size={16} /></button>
-        <button onClick={() => setCurrentPly(Math.max(0, currentPly - 1))}><ChevronLeft size={16} /></button>
-        <button onClick={() => setCurrentPly(Math.min(moves.length, currentPly + 1))}><ChevronRight size={16} /></button>
-        <button onClick={() => setCurrentPly(moves.length)}><ChevronsRight size={16} /></button>
+        <button title="Start" onClick={() => setCurrentPly(0)} disabled={!moves.length || clampedPly === 0}><ChevronsLeft size={16} /></button>
+        <button title="Previous move" onClick={() => setCurrentPly(Math.max(0, clampedPly - 1))} disabled={!moves.length || clampedPly === 0}><ChevronLeft size={16} /></button>
+        <span className="ply-counter">{moves.length ? `${clampedPly}/${moves.length}` : '0/0'}</span>
+        <button title="Next move" onClick={() => setCurrentPly(Math.min(moves.length, clampedPly + 1))} disabled={!moves.length || clampedPly === moves.length}><ChevronRight size={16} /></button>
+        <button title="End" onClick={() => setCurrentPly(moves.length)} disabled={!moves.length || clampedPly === moves.length}><ChevronsRight size={16} /></button>
       </div>
       <div className="move-history">
         <div className="history-head">
@@ -54,8 +58,24 @@ export function GamePanel({
             return (
               <div className="move-row" key={i}>
                 <span>{i + 1}.</span>
-                <button className={white?.ply === selectedMoment?.ply ? 'highlight' : ''} onClick={() => white && setCurrentPly(white.ply)}>{white?.san || ''}</button>
-                <button className={black?.ply === selectedMoment?.ply ? 'highlight' : ''} onClick={() => black && setCurrentPly(black.ply)}>{black?.san || ''}</button>
+                <button
+                  className={[
+                    white?.ply === clampedPly ? 'current' : '',
+                    white && selectedMomentIds.has(white.ply) ? 'moment-mark' : ''
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => white && setCurrentPly(white.ply)}
+                >
+                  {white?.san || ''}
+                </button>
+                <button
+                  className={[
+                    black?.ply === clampedPly ? 'current' : '',
+                    black && selectedMomentIds.has(black.ply) ? 'moment-mark' : ''
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => black && setCurrentPly(black.ply)}
+                >
+                  {black?.san || ''}
+                </button>
               </div>
             );
           })}

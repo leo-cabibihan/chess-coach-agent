@@ -53,3 +53,5 @@ export type CoachAnalysis = {
   training_plan: string[];
   retrieval_notes: string[];
 };
+
+export type Platform = 'chess.com' | 'lichess';
