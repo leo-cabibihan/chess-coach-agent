@@ -4,12 +4,15 @@ import os
 from textwrap import dedent
 
 import httpx
+from dotenv import load_dotenv
 
 from .knowledge import retrieve_notes
 from .models import ChatResponse, CoachAnalysis
 
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+load_dotenv()
 
 
 def _model_name() -> str:
