@@ -1,4 +1,11 @@
-import type { AnalyzeResponse, CoachAnalysis, CriticalMoment, MonitoringSummary, Platform } from './types';
+import type {
+  AnalyzeResponse,
+  CoachAnalysis,
+  CriticalMoment,
+  GamePreviewResponse,
+  MonitoringSummary,
+  Platform
+} from './types';
 
 export async function getSample(): Promise<{ player: string; pgn: string }> {
   const response = await fetch('/api/sample');
@@ -23,6 +30,20 @@ export async function importGames(username: string, platform: Platform, maxGames
     body: JSON.stringify({ username, platform, max_games: maxGames })
   });
   if (!response.ok) throw new Error(`Could not import games from ${platform}`);
+  return response.json();
+}
+
+export async function previewPlayerGames(
+  username: string,
+  platform: Platform,
+  maxGames = 50
+): Promise<GamePreviewResponse> {
+  const response = await fetch('/api/games/preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, platform, max_games: maxGames })
+  });
+  if (!response.ok) throw new Error(`Could not find games for ${username} on ${platform}`);
   return response.json();
 }
 

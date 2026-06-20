@@ -46,7 +46,9 @@ def parse_pgn_text(pgn_text: str, player: str = "kfctofu", max_games: int = 20) 
         raw_id = "|".join(
             [
                 headers.get("Site", ""),
+                headers.get("Link", ""),
                 headers.get("Date", ""),
+                headers.get("UTCTime", headers.get("StartTime", "")),
                 headers.get("White", ""),
                 headers.get("Black", ""),
                 headers.get("Result", ""),

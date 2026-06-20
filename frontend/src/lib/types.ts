@@ -61,6 +61,29 @@ export type AnalyzeResponse = {
 
 export type Platform = 'chess.com' | 'lichess';
 
+export type GamePreview = {
+  game_id: string;
+  pgn: string;
+  source: Platform;
+  white: string;
+  black: string;
+  result: string;
+  date: string;
+  time_control: string;
+  link: string;
+  player_color: 'white' | 'black' | 'unknown';
+  player_result: 'win' | 'loss' | 'draw' | 'unknown';
+  player_elo: number | null;
+  opponent: string;
+  opponent_elo: number | null;
+};
+
+export type GamePreviewResponse = {
+  username: string;
+  platform: Platform;
+  games: GamePreview[];
+};
+
 export type MonitoringSummary = {
   total_events: number;
   event_counts: Record<string, number>;

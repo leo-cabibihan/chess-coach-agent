@@ -89,7 +89,30 @@ class ChatResponse(BaseModel):
 class ImportRequest(BaseModel):
     username: str
     platform: Literal["chess.com", "lichess"]
-    max_games: int = 20
+    max_games: int = Field(default=20, ge=1, le=50)
+
+
+class GamePreview(BaseModel):
+    game_id: str
+    pgn: str
+    source: Literal["chess.com", "lichess"]
+    white: str
+    black: str
+    result: str
+    date: str
+    time_control: str = ""
+    link: str = ""
+    player_color: Literal["white", "black", "unknown"]
+    player_result: Literal["win", "loss", "draw", "unknown"]
+    player_elo: int | None = None
+    opponent: str
+    opponent_elo: int | None = None
+
+
+class GamePreviewResponse(BaseModel):
+    username: str
+    platform: Literal["chess.com", "lichess"]
+    games: list[GamePreview]
 
 
 class FeedbackRequest(BaseModel):

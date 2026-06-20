@@ -19,7 +19,7 @@ OpenRouter commentary, deterministic fallback explanations, and daily challenge 
 ## What It Does
 
 - Upload or paste PGN.
-- Load games from Chess.com or Lichess through backend import tools.
+- Browse up to 50 Chess.com or Lichess games before choosing which ones to analyze.
 - Parse games into structured moves and metadata.
 - Find up to four critical moments per game.
 - Compare the move played against the engine or fallback best candidate.
@@ -34,7 +34,8 @@ OpenRouter commentary, deterministic fallback explanations, and daily challenge 
 
 The React app uses TanStack Router with intent preloading and scroll restoration:
 
-- `/analyze` separates online import from pasted PGN.
+- `/analyze` separates online import from pasted PGN. Online import first loads a metadata-only game
+  picker; the user can filter by result and select up to ten games before running Stockfish.
 - `/games` is the analyzed-game library.
 - `/games/:gameId?moment=:momentId` makes game and critical-moment selection URL-addressable.
 - `/coach` provides focused MiniMax chat with selectable game context.

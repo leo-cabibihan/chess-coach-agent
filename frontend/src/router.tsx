@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Link,
   Outlet,
@@ -23,6 +23,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { AnalysisPanel } from './components/AnalysisPanel';
 import { GameList } from './components/GameList';
+import { GamePicker } from './components/GamePicker';
 import { GamePanel } from './components/GamePanel';
 import { MonitoringDashboard } from './components/MonitoringDashboard';
 import type { CoachAnalysis, CriticalMoment, Platform } from './lib/types';
@@ -85,8 +86,8 @@ function AnalyzePage() {
     if (first) await navigate({ to: '/games/$gameId', params: { gameId: first.game.game_id }, search: { moment: undefined } });
   }
 
-  async function importOnline() {
-    const first = await workspace.runImport();
+  async function analyzeSelected() {
+    const first = await workspace.analyzeSelectedGames();
     if (first) await navigate({ to: '/games/$gameId', params: { gameId: first.game.game_id }, search: { moment: undefined } });
   }
 
@@ -95,7 +96,7 @@ function AnalyzePage() {
       <PageHeader
         eyebrow="Game intake"
         title="Analyze your games"
-        detail="Import a recent set or review pasted PGN."
+        detail="Choose games from a player profile or review pasted PGN."
       />
       <section className="intake-workspace">
         <div className="intake-section online-import">
@@ -115,20 +116,24 @@ function AnalyzePage() {
                 <option value="lichess">Lichess</option>
               </select>
             </label>
-            <label>
-              Games
-              <select value={workspace.maxGames} onChange={(event) => workspace.setMaxGames(Number(event.target.value))}>
-                <option value={5}>5 recent</option>
-                <option value={10}>10 recent</option>
-                <option value={20}>20 recent</option>
-              </select>
-            </label>
           </div>
-          <button className="primary" onClick={importOnline} disabled={workspace.loading || !workspace.player.trim()}>
+          <button className="primary" onClick={workspace.findGames} disabled={workspace.loading || !workspace.player.trim()}>
             {workspace.loading ? <Loader2 className="spin" size={17} /> : <Database size={17} />}
-            Import and analyze
+            Find games
           </button>
         </div>
+
+        {workspace.availableGames.length > 0 && (
+          <GamePicker
+            games={workspace.availableGames}
+            selectedIds={workspace.selectedGameIds}
+            loading={workspace.loading}
+            onToggle={workspace.toggleGameSelection}
+            onSelectAll={workspace.selectAllGames}
+            onClear={workspace.clearGameSelection}
+            onAnalyze={analyzeSelected}
+          />
+        )}
 
         <div className="intake-divider"><span>or</span></div>
 

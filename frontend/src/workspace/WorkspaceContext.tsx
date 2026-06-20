@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { analyzeGames, askCoach, getSample, importGames, sendMomentFeedback } from '../lib/api';
-import type { CoachAnalysis, CriticalMoment, Platform } from '../lib/types';
+import { analyzeGames, askCoach, getSample, previewPlayerGames, sendMomentFeedback } from '../lib/api';
+import type { CoachAnalysis, CriticalMoment, GamePreview, Platform } from '../lib/types';
 
 const STORAGE_KEY = 'chess-coach-workspace';
 
@@ -9,6 +9,9 @@ type StoredWorkspace = {
   activeGameId: string;
   player: string;
   pgn: string;
+  platform?: Platform;
+  availableGames?: GamePreview[];
+  selectedGameIds?: string[];
 };
 
 type WorkspaceContextValue = {
@@ -18,8 +21,8 @@ type WorkspaceContextValue = {
   setPlayer: (value: string) => void;
   platform: Platform;
   setPlatform: (value: Platform) => void;
-  maxGames: number;
-  setMaxGames: (value: number) => void;
+  availableGames: GamePreview[];
+  selectedGameIds: string[];
   analyses: CoachAnalysis[];
   activeGameId: string;
   activeAnalysis: CoachAnalysis | null;
@@ -31,7 +34,11 @@ type WorkspaceContextValue = {
   monitoringRefresh: number;
   openGame: (gameId: string) => void;
   runAnalysis: () => Promise<CoachAnalysis | null>;
-  runImport: () => Promise<CoachAnalysis | null>;
+  findGames: () => Promise<void>;
+  toggleGameSelection: (gameId: string) => void;
+  selectAllGames: () => void;
+  clearGameSelection: () => void;
+  analyzeSelectedGames: () => Promise<CoachAnalysis | null>;
   ask: (question: string) => Promise<void>;
   recordFeedback: (moment: CriticalMoment, rating: 'helpful' | 'not_helpful') => Promise<void>;
   clearFeedbackStatus: () => void;
@@ -52,8 +59,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const stored = useMemo(loadStoredWorkspace, []);
   const [pgn, setPgn] = useState(stored?.pgn || '');
   const [player, setPlayer] = useState(stored?.player || 'kfctofu');
-  const [platform, setPlatform] = useState<Platform>('chess.com');
-  const [maxGames, setMaxGames] = useState(10);
+  const [platform, setPlatform] = useState<Platform>(stored?.platform || 'chess.com');
+  const [availableGames, setAvailableGames] = useState<GamePreview[]>(stored?.availableGames || []);
+  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(stored?.selectedGameIds || []);
   const [analyses, setAnalyses] = useState<CoachAnalysis[]>(stored?.analyses || []);
   const [activeGameId, setActiveGameId] = useState(stored?.activeGameId || stored?.analyses[0]?.game.game_id || '');
   const [loading, setLoading] = useState(false);
@@ -72,8 +80,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   }, [pgn]);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ analyses, activeGameId, player, pgn }));
-  }, [activeGameId, analyses, pgn, player]);
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      analyses, activeGameId, player, pgn, platform, availableGames, selectedGameIds
+    }));
+  }, [activeGameId, analyses, availableGames, pgn, platform, player, selectedGameIds]);
 
   const activeAnalysis = analyses.find((item) => item.game.game_id === activeGameId) || analyses[0] || null;
 
@@ -86,9 +96,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   async function runAnalysis() {
     setLoading(true);
     setError('');
-    setStatus(`Analyzing up to ${maxGames} PGN games...`);
+    setStatus('Analyzing pasted PGN...');
     try {
-      const result = await analyzeGames(pgn, player, maxGames);
+      const result = await analyzeGames(pgn, player, 20);
       setAnalyses(result.analyses);
       const first = result.analyses[0] || null;
       if (first) openGame(first.game.game_id);
@@ -105,23 +115,59 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function runImport() {
-    if (!player.trim()) return null;
+  async function findGames() {
+    if (!player.trim()) return;
     setLoading(true);
     setError('');
-    setStatus(`Importing ${maxGames} recent ${platform} games...`);
+    setStatus(`Finding ${platform} games for ${player}...`);
     try {
-      const result = await importGames(player, platform, maxGames);
+      const result = await previewPlayerGames(player, platform, 50);
+      setAvailableGames(result.games);
+      setSelectedGameIds(result.games.slice(0, 3).map((game) => game.game_id));
+      setStatus(`Found ${result.games.length} games. Select up to 10 to analyze.`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : `Could not find games on ${platform}`);
+      setStatus('Game search failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function toggleGameSelection(gameId: string) {
+    setSelectedGameIds((current) => {
+      if (current.includes(gameId)) return current.filter((id) => id !== gameId);
+      if (current.length >= 10) {
+        setError('Select up to 10 games per analysis batch.');
+        return current;
+      }
+      setError('');
+      return [...current, gameId];
+    });
+  }
+
+  function selectAllGames() {
+    setError('');
+    setSelectedGameIds(availableGames.slice(0, 10).map((game) => game.game_id));
+  }
+
+  async function analyzeSelectedGames() {
+    const selected = availableGames.filter((game) => selectedGameIds.includes(game.game_id));
+    if (!selected.length) return null;
+    setLoading(true);
+    setError('');
+    setStatus(`Analyzing ${selected.length} selected games...`);
+    try {
+      const result = await analyzeGames(selected.map((game) => game.pgn).join('\n\n'), player, selected.length);
       setAnalyses(result.analyses);
       const first = result.analyses[0] || null;
       if (first) openGame(first.game.game_id);
       const moments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
-      setStatus(`Imported ${result.analyses.length} ${platform} games with ${moments} moments`);
+      setStatus(`Analyzed ${result.analyses.length} selected games with ${moments} moments`);
       setMonitoringRefresh((value) => value + 1);
       return first;
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : `Could not import from ${platform}`);
-      setStatus('Import failed');
+      setError(caught instanceof Error ? caught.message : 'Selected game analysis failed');
+      setStatus('Could not analyze selected games');
       return null;
     } finally {
       setLoading(false);
@@ -158,9 +204,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={{
-      pgn, setPgn, player, setPlayer, platform, setPlatform, maxGames, setMaxGames,
+      pgn, setPgn, player, setPlayer, platform, setPlatform, availableGames, selectedGameIds,
       analyses, activeGameId, activeAnalysis, loading, status, error, coachAnswer,
-      feedbackStatus, monitoringRefresh, openGame, runAnalysis, runImport, ask,
+      feedbackStatus, monitoringRefresh, openGame, runAnalysis, findGames,
+      toggleGameSelection, selectAllGames, clearGameSelection: () => setSelectedGameIds([]),
+      analyzeSelectedGames, ask,
       recordFeedback, clearFeedbackStatus: () => setFeedbackStatus('')
     }}>
       {children}

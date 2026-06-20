@@ -4,7 +4,7 @@ The app records local JSONL events in `backend/data/logs/events.jsonl`. The Reac
 monitoring** dashboard calls `GET /api/monitoring` and displays total events, completed analyses,
 feedback volume, helpful rate, and event-count bars.
 
-Recorded events include `analysis_requested`, `analysis_completed`, `games_imported`,
+Recorded events include `analysis_requested`, `analysis_completed`, `games_previewed`, `games_imported`,
 `chat_requested`, `chat_completed`, and `moment_feedback`. Chat completion events record whether the
 OpenRouter model was used. Analysis completion events record game, moment, and theme counts.
 

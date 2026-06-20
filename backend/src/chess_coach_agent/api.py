@@ -5,8 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from .agent import ChessCoachAgent, sample_pgn
+from .importers import fetch_platform_pgn, preview_pgn_games
 from .llm import answer_question
-from .models import AnalyzeRequest, AnalyzeResponse, ChatRequest, ChatResponse, FeedbackRequest, ImportRequest
+from .models import (
+    AnalyzeRequest,
+    AnalyzeResponse,
+    ChatRequest,
+    ChatResponse,
+    FeedbackRequest,
+    GamePreviewResponse,
+    ImportRequest,
+)
 from .monitoring import log_event, monitoring_summary
 
 
@@ -46,6 +55,17 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
 @app.post("/api/import", response_model=AnalyzeResponse)
 async def import_games(request: ImportRequest) -> AnalyzeResponse:
     return await agent.import_platform_games(request)
+
+
+@app.post("/api/games/preview", response_model=GamePreviewResponse)
+async def preview_games(request: ImportRequest) -> GamePreviewResponse:
+    pgn = await fetch_platform_pgn(request.platform, request.username, request.max_games)
+    games = preview_pgn_games(pgn, request.username, request.platform, request.max_games)
+    log_event(
+        "games_previewed",
+        {"platform": request.platform, "username": request.username, "games": len(games)},
+    )
+    return GamePreviewResponse(username=request.username, platform=request.platform, games=games)
 
 
 @app.post("/api/chat", response_model=ChatResponse)

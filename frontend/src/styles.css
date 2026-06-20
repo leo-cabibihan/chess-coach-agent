@@ -136,12 +136,19 @@ main {
 .intake-workspace {
   display: grid;
   grid-template-columns: minmax(300px, 0.82fr) 40px minmax(420px, 1.18fr);
+  grid-template-areas:
+    "online divider pgn"
+    "picker picker picker";
   align-items: stretch;
   padding: 24px;
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 14px 45px rgba(52, 70, 88, 0.11);
 }
+
+.online-import { grid-area: online; }
+.pgn-import { grid-area: pgn; }
+.intake-divider { grid-area: divider; }
 
 .intake-section {
   display: flex;
@@ -216,6 +223,145 @@ main {
 
 .route-status.error {
   color: #b4232d;
+}
+
+.game-picker {
+  grid-area: picker;
+  margin-top: 24px;
+  padding: 20px 0 0;
+  border-top: 1px solid #e0e7ed;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.game-picker-head, .picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.picker-actions, .result-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.picker-actions button, .result-filters button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #d7e0e7;
+  border-radius: 6px;
+  color: #4d5b68;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.result-filters {
+  margin: 16px 0 10px;
+}
+
+.result-filters button.active {
+  color: #ffffff;
+  border-color: #2e7c52;
+  background: #2e7c52;
+}
+
+.preview-game-list {
+  max-height: 430px;
+  overflow: auto;
+  border-top: 1px solid #e2e8ed;
+  border-bottom: 1px solid #e2e8ed;
+}
+
+.preview-game {
+  display: grid;
+  grid-template-columns: 22px 8px minmax(190px, 1fr) 90px 70px;
+  align-items: center;
+  gap: 12px;
+  min-height: 66px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #e8edf1;
+  color: #27333e;
+  cursor: pointer;
+}
+
+.preview-game:last-child {
+  border-bottom: 0;
+}
+
+.preview-game:hover {
+  background: #f7faf8;
+}
+
+.preview-game.selected {
+  background: #eef8f2;
+}
+
+.preview-game input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  padding: 0;
+  accent-color: #27764c;
+}
+
+.result-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8c98a2;
+}
+
+.result-dot.win { background: #23844e; }
+.result-dot.loss { background: #c4424b; }
+.result-dot.draw { background: #bf851d; }
+
+.preview-opponent strong, .preview-opponent small,
+.preview-rating strong, .preview-rating small {
+  display: block;
+}
+
+.preview-opponent small, .preview-rating small {
+  margin-top: 4px;
+  color: #6b7782;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.preview-rating {
+  text-align: right;
+}
+
+.result-label {
+  padding: 4px 7px;
+  border-radius: 5px;
+  text-align: center;
+  color: #5f6b75;
+  background: #edf1f4;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.result-label.win { color: #16663b; background: #e5f5eb; }
+.result-label.loss { color: #9d2d36; background: #fcebed; }
+.result-label.draw { color: #80550f; background: #fff3d8; }
+
+.picker-empty {
+  padding: 32px;
+  color: #75818c;
+  text-align: center;
+}
+
+.picker-footer {
+  padding-top: 16px;
+}
+
+.picker-footer > span {
+  color: #67747f;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .continue-review {
@@ -1017,6 +1163,11 @@ textarea {
   }
   .intake-workspace {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "online"
+      "picker"
+      "divider"
+      "pgn";
   }
   .intake-divider {
     min-height: 40px;
@@ -1091,5 +1242,23 @@ textarea {
   .continue-review {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .game-picker {
+    padding: 18px 0 0;
+  }
+  .game-picker-head, .picker-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .preview-game {
+    grid-template-columns: 22px 8px minmax(0, 1fr) 62px;
+    gap: 9px;
+  }
+  .preview-rating {
+    display: none;
+  }
+  .picker-footer .primary {
+    width: 100%;
+    justify-content: center;
   }
 }
