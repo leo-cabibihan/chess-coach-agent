@@ -1,0 +1,776 @@
+{
+  "totals": {
+    "games": 3175,
+    "wins": 1575,
+    "losses": 1523,
+    "draws": 77,
+    "loss_rate": 0.48
+  },
+  "theme_counts": {
+    "hanging_piece": 1161,
+    "tactical_sequence": 1411,
+    "king_safety": 756,
+    "back_rank_mate": 127,
+    "endgame_conversion": 355,
+    "opening_development": 131,
+    "queen_exposure": 234,
+    "time_pressure": 175
+  },
+  "win_theme_counts": {
+    "king_safety": 709,
+    "tactical_sequence": 1492,
+    "hanging_piece": 1191,
+    "opening_development": 117,
+    "queen_exposure": 287
+  },
+  "engine_severe_counts": {
+    "tactical_sequence": 74,
+    "hanging_piece": 32
+  },
+  "color_outcomes": {
+    "white_loss": 723,
+    "black_win": 738,
+    "white_win": 837,
+    "black_loss": 800,
+    "black_draw": 45,
+    "white_draw": 32
+  },
+  "source_outcomes": {
+    "chess.com_loss": 1319,
+    "chess.com_win": 1350,
+    "chess.com_draw": 59,
+    "lichess_loss": 204,
+    "lichess_win": 225,
+    "lichess_draw": 18
+  },
+  "termination_top": [
+    [
+      "Normal",
+      162
+    ],
+    [
+      "Time forfeit",
+      42
+    ],
+    [
+      "edricflorencebalaga won by resignation",
+      8
+    ],
+    [
+      "Ecrimson23 won by checkmate",
+      3
+    ],
+    [
+      "Ecrimson23 won by resignation",
+      3
+    ],
+    [
+      "HaymeStark won by checkmate",
+      2
+    ],
+    [
+      "JJ2Cab won by resignation",
+      2
+    ],
+    [
+      "dennn2903 won by resignation",
+      2
+    ],
+    [
+      "fatherffferrref won by resignation",
+      2
+    ],
+    [
+      "vinze24 won by resignation",
+      2
+    ],
+    [
+      "edricbalaga won by resignation",
+      2
+    ],
+    [
+      "jimmyb00ts won by resignation",
+      1
+    ],
+    [
+      "theos-w won by resignation",
+      1
+    ],
+    [
+      "Joandesilva won by checkmate",
+      1
+    ],
+    [
+      "makerdoodle79 won by resignation",
+      1
+    ]
+  ],
+  "eco_loss_top": [
+    [
+      "C20",
+      "https://www.chess.com/openings/Kings-Pawn-Opening-1...e5",
+      85
+    ],
+    [
+      "C40",
+      "https://www.chess.com/openings/Kings-Pawn-Opening-Kings-Knight-Variation",
+      51
+    ],
+    [
+      "C50",
+      "https://www.chess.com/openings/Italian-Game",
+      34
+    ],
+    [
+      "C50",
+      "",
+      34
+    ],
+    [
+      "C41",
+      "https://www.chess.com/openings/Philidor-Defense-3.Bc4",
+      31
+    ],
+    [
+      "C55",
+      "https://www.chess.com/openings/Italian-Game-Two-Knights-Modern-Bishops-Opening",
+      23
+    ],
+    [
+      "A00",
+      "https://www.chess.com/openings/Van-t-Kruijs-Opening-1...e5",
+      19
+    ],
+    [
+      "B01",
+      "https://www.chess.com/openings/Scandinavian-Defense-Mieses-Kotrc-Variation-3.Nc3",
+      19
+    ],
+    [
+      "B01",
+      "",
+      19
+    ],
+    [
+      "C00",
+      "https://www.chess.com/openings/French-Defense-Normal-Variation",
+      17
+    ],
+    [
+      "B01",
+      "https://www.chess.com/openings/Scandinavian-Defense-Mieses-Kotrc-Variation-3.Nc3-Qe5-4.Be2",
+      17
+    ],
+    [
+      "C24",
+      "https://www.chess.com/openings/Bishops-Opening-Berlin-Defense",
+      15
+    ]
+  ],
+  "time_control_loss_top": [
+    [
+      "600",
+      771
+    ],
+    [
+      "300",
+      407
+    ],
+    [
+      "900+10",
+      112
+    ],
+    [
+      "600+0",
+      90
+    ],
+    [
+      "600+5",
+      89
+    ],
+    [
+      "300+0",
+      22
+    ],
+    [
+      "1800",
+      21
+    ],
+    [
+      "180",
+      3
+    ],
+    [
+      "1/259200",
+      2
+    ],
+    [
+      "3600",
+      2
+    ],
+    [
+      "1200",
+      1
+    ],
+    [
+      "-",
+      1
+    ]
+  ],
+  "examples": {
+    "king_safety": [
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68864549873",
+        "date": "2023.01.31",
+        "white": "kfctofu",
+        "black": "theos-w",
+        "result": "0-1",
+        "ply": 18,
+        "san": "Bxc3+",
+        "fen_before": "rnbqk2r/pp4pp/2p1p3/3p1p2/Bb1P1B2/2P1PN2/P1P1QPPP/R3K2R b KQkq - 0 9",
+        "fen_after": "rnbqk2r/pp4pp/2p1p3/3p1p2/B2P1B2/2b1PN2/P1P1QPPP/R3K2R w KQkq - 0 10",
+        "theme": "king_safety",
+        "note": "Opponent gives check while king remains in the center or uncastled.",
+        "severity": 4,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68715134985",
+        "date": "2023.01.29",
+        "white": "Joandesilva",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 19,
+        "san": "Qb5+",
+        "fen_before": "rn2k2r/ppp2ppp/3p4/4p1q1/4b3/PQ6/PBPP2PP/2KR1BNR w kq - 2 10",
+        "fen_after": "rn2k2r/ppp2ppp/3p4/1Q2p1q1/4b3/P7/PBPP2PP/2KR1BNR b kq - 3 10",
+        "theme": "king_safety",
+        "note": "Opponent gives check while king remains in the center or uncastled.",
+        "severity": 4,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68700193763",
+        "date": "2023.01.29",
+        "white": "makerdoodle79",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 27,
+        "san": "Qxe4+",
+        "fen_before": "r3kb1r/1pp2ppp/p4n2/2Pp4/4q3/N2QB3/PP3PPP/R3K1NR w KQkq - 1 14",
+        "fen_after": "r3kb1r/1pp2ppp/p4n2/2Pp4/4Q3/N3B3/PP3PPP/R3K1NR b KQkq - 0 14",
+        "theme": "king_safety",
+        "note": "Opponent gives check while king remains in the center or uncastled.",
+        "severity": 4,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/daily/465349079",
+        "date": "2023.01.16",
+        "white": "Ecrimson23",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 25,
+        "san": "Qf7+",
+        "fen_before": "r1b1k2r/1pp1n1pp/p1nqp3/3pN3/5Q2/2NB4/PPP2PPP/R4RK1 w kq - 2 13",
+        "fen_after": "r1b1k2r/1pp1nQpp/p1nqp3/3pN3/8/2NB4/PPP2PPP/R4RK1 b kq - 3 13",
+        "theme": "king_safety",
+        "note": "Opponent gives check while king remains in the center or uncastled.",
+        "severity": 4,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/daily/465349079",
+        "date": "2023.01.16",
+        "white": "Ecrimson23",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 29,
+        "san": "Qxf8#",
+        "fen_before": "r1bk1r2/1pp1nQpp/p1nqp3/3pN3/5P2/2NB4/PPP3PP/R4RK1 w - - 1 15",
+        "fen_after": "r1bk1Q2/1pp1n1pp/p1nqp3/3pN3/5P2/2NB4/PPP3PP/R4RK1 b - - 0 15",
+        "theme": "king_safety",
+        "note": "Opponent gives check while king remains in the center or uncastled.",
+        "severity": 4,
+        "engine": null
+      }
+    ],
+    "hanging_piece": [
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/95924667135",
+        "date": "2023.12.10",
+        "white": "sambordge",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 32,
+        "san": "Qf3+",
+        "fen_before": "r4rk1/ppp1ppbp/6p1/3qPb2/3P1P1P/1PQB2P1/P7/n1BK2NR b - - 0 16",
+        "fen_after": "r4rk1/ppp1ppbp/6p1/4Pb2/3P1P1P/1PQB1qP1/P7/n1BK2NR w - - 1 17",
+        "theme": "hanging_piece",
+        "note": "Move leaves an undefended attacked piece worth up to 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 758,
+          "after_cp": -498,
+          "drop_cp": 1256,
+          "best_move": "d5h1",
+          "best_move_san": "Qxh1"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/96128131895",
+        "date": "2023.12.12",
+        "white": "Groucho94",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 22,
+        "san": "gxf6",
+        "fen_before": "r1b2rk1/p1p2ppp/5B2/2bqp3/8/8/PPP2PPP/RN1QK1NR b KQ - 0 11",
+        "fen_after": "r1b2rk1/p1p2p1p/5p2/2bqp3/8/8/PPP2PPP/RN1QK1NR w KQ - 0 12",
+        "theme": "hanging_piece",
+        "note": "Move leaves an undefended attacked piece worth up to 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 535,
+          "after_cp": -628,
+          "drop_cp": 1163,
+          "best_move": "c5f2",
+          "best_move_san": "Bxf2+"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/101440836490",
+        "date": "2024.03.06",
+        "white": "BILALSARAJEVO",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 48,
+        "san": "Qxe3+",
+        "fen_before": "8/Qp1k2p1/2pp2bp/4p3/4P1P1/3PPq1P/PPP5/5RK1 b - - 2 24",
+        "fen_after": "8/Qp1k2p1/2pp2bp/4p3/4P1P1/3Pq2P/PPP5/5RK1 w - - 0 25",
+        "theme": "hanging_piece",
+        "note": "Move leaves an undefended attacked piece worth up to 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 328,
+          "after_cp": -795,
+          "drop_cp": 1123,
+          "best_move": "f3g3",
+          "best_move_san": "Qg3+"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/67672218499",
+        "date": "2023.01.17",
+        "white": "bizbier2",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 36,
+        "san": "Qxh4+",
+        "fen_before": "r3k2r/1pp2pp1/2n2q2/3p3p/3P3P/1PB1Pb2/P3N3/R2QK2R b KQkq - 0 18",
+        "fen_after": "r3k2r/1pp2pp1/2n5/3p3p/3P3q/1PB1Pb2/P3N3/R2QK2R w KQkq - 0 19",
+        "theme": "hanging_piece",
+        "note": "Move leaves an undefended attacked piece worth up to 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 650,
+          "after_cp": -416,
+          "drop_cp": 1066,
+          "best_move": "f3h1",
+          "best_move_san": "Bxh1"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/104904242186",
+        "date": "2024.04.01",
+        "white": "kfctofu",
+        "black": "ScorpiosAidy",
+        "result": "0-1",
+        "ply": 29,
+        "san": "Qxf7",
+        "fen_before": "2krr3/ppp1Qppp/3p4/3q4/3p4/3P1N2/PPP2PPP/R3R1K1 w - - 1 15",
+        "fen_after": "2krr3/ppp2Qpp/3p4/3q4/3p4/3P1N2/PPP2PPP/R3R1K1 b - - 0 15",
+        "theme": "hanging_piece",
+        "note": "Move leaves an undefended attacked piece worth up to 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 442,
+          "after_cp": -516,
+          "drop_cp": 958,
+          "best_move": "e7h4",
+          "best_move_san": "Qh4"
+        }
+      }
+    ],
+    "queen_exposure": [
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/67669287927",
+        "date": "2023.01.17",
+        "white": "Kingsea999",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 20,
+        "san": "Qd4",
+        "fen_before": "rnb1k2r/pp1p1ppp/5n2/2p1p3/1q2P3/3P4/P2BBPPP/RN1Q1KNR b kq - 3 10",
+        "fen_after": "rnb1k2r/pp1p1ppp/5n2/2p1p3/3qP3/3P4/P2BBPPP/RN1Q1KNR w kq - 4 11",
+        "theme": "queen_exposure",
+        "note": "Multiple queen moves in the first ten moves can invite tempos and missed development.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/107838433522",
+        "date": "2024.06.19",
+        "white": "kfctofu",
+        "black": "jonnathanraphael",
+        "result": "0-1",
+        "ply": 19,
+        "san": "Qg4",
+        "fen_before": "rnbq1bnr/pppp3p/6k1/6p1/2BPP3/7Q/PPP2PPP/RNB1K2R w KQ - 2 10",
+        "fen_after": "rnbq1bnr/pppp3p/6k1/6p1/2BPP1Q1/8/PPP2PPP/RNB1K2R b KQ - 3 10",
+        "theme": "queen_exposure",
+        "note": "Multiple queen moves in the first ten moves can invite tempos and missed development.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/139470133886",
+        "date": "2025.06.11",
+        "white": "kfctofu",
+        "black": "rajvenkat09",
+        "result": "0-1",
+        "ply": 19,
+        "san": "Qf7+",
+        "fen_before": "r1bqkb2/p3n2p/2np1Qp1/1pp5/2B1P3/3P4/PPP2PPP/RNB1K2R w KQq - 0 10",
+        "fen_after": "r1bqkb2/p3nQ1p/2np2p1/1pp5/2B1P3/3P4/PPP2PPP/RNB1K2R b KQq - 1 10",
+        "theme": "queen_exposure",
+        "note": "Multiple queen moves in the first ten moves can invite tempos and missed development.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/165598688006",
+        "date": "2026.03.06",
+        "white": "kfctofu",
+        "black": "Jay_mi",
+        "result": "0-1",
+        "ply": 19,
+        "san": "Qc4",
+        "fen_before": "rnb1qbnr/pp1k4/2p1pp2/1Q6/4p3/2N5/PPPP1PPP/R1B1KB1R w KQ - 0 10",
+        "fen_after": "rnb1qbnr/pp1k4/2p1pp2/8/2Q1p3/2N5/PPPP1PPP/R1B1KB1R b KQ - 1 10",
+        "theme": "queen_exposure",
+        "note": "Multiple queen moves in the first ten moves can invite tempos and missed development.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "lichess",
+        "link": "https://lichess.org/89R7RSlC",
+        "date": "2023.12.10",
+        "white": "kfctofu",
+        "black": "telexPandian",
+        "result": "0-1",
+        "ply": 19,
+        "san": "Qh5",
+        "fen_before": "1rb1kbnr/p1pqnppp/3p4/3Q4/2B1P3/2P2N2/PP3PPP/RNB1K2R w KQk - 5 10",
+        "fen_after": "1rb1kbnr/p1pqnppp/3p4/7Q/2B1P3/2P2N2/PP3PPP/RNB1K2R b KQk - 6 10",
+        "theme": "queen_exposure",
+        "note": "Multiple queen moves in the first ten moves can invite tempos and missed development.",
+        "severity": 7,
+        "engine": null
+      }
+    ],
+    "opening_development": [
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/67183295347",
+        "date": "2023.01.11",
+        "white": "gerscy",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 16,
+        "san": "Bf8",
+        "fen_before": "r1b1k1nr/ppp2ppp/5q2/3P4/1b1P4/8/PP1B1PPP/RN1QKB1R b KQkq - 2 8",
+        "fen_after": "r1b1kbnr/ppp2ppp/5q2/3P4/3P4/8/PP1B1PPP/RN1QKB1R w KQkq - 3 9",
+        "theme": "opening_development",
+        "note": "By move 8, king is uncastled with 3 minor pieces still home.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/107031290234",
+        "date": "2024.04.17",
+        "white": "lisa712rook",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 16,
+        "san": "Qd8",
+        "fen_before": "rnb1kb1r/ppp1qp2/3p3p/3Npp2/2B1P3/3P1Q2/PPP2PPP/R3K1NR b KQkq - 1 8",
+        "fen_after": "rnbqkb1r/ppp2p2/3p3p/3Npp2/2B1P3/3P1Q2/PPP2PPP/R3K1NR w KQkq - 2 9",
+        "theme": "opening_development",
+        "note": "By move 8, king is uncastled with 3 minor pieces still home.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/108362768068",
+        "date": "2024.07.23",
+        "white": "fraxus101",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 16,
+        "san": "h6",
+        "fen_before": "rnb1k1nr/ppq2ppp/1bppP3/6B1/3P4/5N2/PP3PPP/RN1QKB1R b KQkq - 0 8",
+        "fen_after": "rnb1k1nr/ppq2pp1/1bppP2p/6B1/3P4/5N2/PP3PPP/RN1QKB1R w KQkq - 0 9",
+        "theme": "opening_development",
+        "note": "By move 8, king is uncastled with 3 minor pieces still home.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/138070032926",
+        "date": "2025.05.03",
+        "white": "downeyjrabc",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 16,
+        "san": "f5",
+        "fen_before": "r1bqkbnr/1pp2ppp/8/p3p3/Pn2P3/N1B2P2/3P2PP/R2QKBNR b KQkq - 1 8",
+        "fen_after": "r1bqkbnr/1pp3pp/8/p3pp2/Pn2P3/N1B2P2/3P2PP/R2QKBNR w KQkq - 0 9",
+        "theme": "opening_development",
+        "note": "By move 8, king is uncastled with 3 minor pieces still home.",
+        "severity": 7,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/138070032926",
+        "date": "2025.05.03",
+        "white": "downeyjrabc",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 20,
+        "san": "Nf4+",
+        "fen_before": "r1bqkbnr/1pp3pp/8/p3pp2/P1B1P3/N1Bn1P2/3PK1PP/R2Q2NR b kq - 3 10",
+        "fen_after": "r1bqkbnr/1pp3pp/8/p3pp2/P1B1Pn2/N1B2P2/3PK1PP/R2Q2NR w kq - 4 11",
+        "theme": "opening_development",
+        "note": "By move 10, king is uncastled with 3 minor pieces still home.",
+        "severity": 7,
+        "engine": null
+      }
+    ],
+    "tactical_sequence": [
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/87016210097",
+        "date": "2023.08.29",
+        "white": "kfctofu",
+        "black": "NixIssues",
+        "result": "0-1",
+        "ply": 75,
+        "san": "Qa1",
+        "fen_before": "6k1/4p1rp/8/6p1/2P1PpR1/1pQ2P2/q2rBK2/6R1 w - - 4 38",
+        "fen_after": "6k1/4p1rp/8/6p1/2P1PpR1/1p3P2/q2rBK2/Q5R1 b - - 5 38",
+        "theme": "tactical_sequence",
+        "note": "Opponent has an immediate capture tactic worth roughly 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": -37,
+          "after_cp": -100000,
+          "drop_cp": 99963,
+          "best_move": "g1e1",
+          "best_move_san": "Re1"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68038339245",
+        "date": "2023.01.21",
+        "white": "kfctofu",
+        "black": "Stefan13758",
+        "result": "0-1",
+        "ply": 65,
+        "san": "Qa6",
+        "fen_before": "2q5/R7/2p1pkp1/1p5p/3P3P/Q5P1/5K2/8 w - - 2 33",
+        "fen_after": "2q5/R7/Q1p1pkp1/1p5p/3P3P/6P1/5K2/8 b - - 3 33",
+        "theme": "tactical_sequence",
+        "note": "Opponent has an immediate capture tactic worth roughly 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 100000,
+          "after_cp": 416,
+          "drop_cp": 99584,
+          "best_move": "a3f3",
+          "best_move_san": "Qf3#"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/97793516211",
+        "date": "2023.12.31",
+        "white": "Jos4548",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 20,
+        "san": "Kf8",
+        "fen_before": "r1bq3r/ppppkp1p/3bnQ2/3Pp1B1/4P3/4K3/PP3PPP/RN3BNR b - - 0 10",
+        "fen_after": "r1bq1k1r/pppp1p1p/3bnQ2/3Pp1B1/4P3/4K3/PP3PPP/RN3BNR w - - 1 11",
+        "theme": "tactical_sequence",
+        "note": "Opponent has an immediate capture tactic worth roughly 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": -781,
+          "after_cp": -100000,
+          "drop_cp": 99219,
+          "best_move": "e7e8",
+          "best_move_san": "Ke8"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/67844501761",
+        "date": "2023.01.19",
+        "white": "kfctofu",
+        "black": "kingslanding_49",
+        "result": "0-1",
+        "ply": 61,
+        "san": "Qxe4",
+        "fen_before": "5rk1/5ppp/1P6/8/3Pp3/8/1qb1QKPP/2r5 w - - 0 31",
+        "fen_after": "5rk1/5ppp/1P6/8/3PQ3/8/1qb2KPP/2r5 b - - 0 31",
+        "theme": "tactical_sequence",
+        "note": "Opponent has an immediate capture tactic worth roughly 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": -797,
+          "after_cp": -100000,
+          "drop_cp": 99203,
+          "best_move": "b6b7",
+          "best_move_san": "b7"
+        }
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/95924667135",
+        "date": "2023.12.10",
+        "white": "sambordge",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 32,
+        "san": "Qf3+",
+        "fen_before": "r4rk1/ppp1ppbp/6p1/3qPb2/3P1P1P/1PQB2P1/P7/n1BK2NR b - - 0 16",
+        "fen_after": "r4rk1/ppp1ppbp/6p1/4Pb2/3P1P1P/1PQB1qP1/P7/n1BK2NR w - - 1 17",
+        "theme": "tactical_sequence",
+        "note": "Opponent has an immediate capture tactic worth roughly 9.0 pawns.",
+        "severity": 9.0,
+        "engine": {
+          "before_cp": 782,
+          "after_cp": -468,
+          "drop_cp": 1250,
+          "best_move": "d5h1",
+          "best_move_san": "Qxh1"
+        }
+      }
+    ],
+    "back_rank_mate": [
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68715134985",
+        "date": "2023.01.29",
+        "white": "Joandesilva",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 57,
+        "san": "#",
+        "fen_before": "1r4k1/p1p1n3/3pB2Q/1q1r4/4p2P/P7/PBP5/2KR3R b - - 3 29",
+        "fen_after": "1r4k1/p1p1n3/3pB2Q/1q1r4/4p2P/P7/PBP5/2KR3R b - - 3 29",
+        "theme": "back_rank_mate",
+        "note": "Final position is a mate with the king boxed near the back rank.",
+        "severity": 8,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/daily/465349079",
+        "date": "2023.01.16",
+        "white": "Ecrimson23",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 29,
+        "san": "#",
+        "fen_before": "r1bk1Q2/1pp1n1pp/p1nqp3/3pN3/5P2/2NB4/PPP3PP/R4RK1 b - - 0 15",
+        "fen_after": "r1bk1Q2/1pp1n1pp/p1nqp3/3pN3/5P2/2NB4/PPP3PP/R4RK1 b - - 0 15",
+        "theme": "back_rank_mate",
+        "note": "Final position is a mate with the king boxed near the back rank.",
+        "severity": 8,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68141565507",
+        "date": "2023.01.22",
+        "white": "Ecrimson23",
+        "black": "kfctofu",
+        "result": "1-0",
+        "ply": 41,
+        "san": "#",
+        "fen_before": "3Q1k1r/p4pp1/3b3p/8/5P2/1P4PP/P2P1P2/R1B1R1K1 b - - 0 21",
+        "fen_after": "3Q1k1r/p4pp1/3b3p/8/5P2/1P4PP/P2P1P2/R1B1R1K1 b - - 0 21",
+        "theme": "back_rank_mate",
+        "note": "Final position is a mate with the king boxed near the back rank.",
+        "severity": 8,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68141031953",
+        "date": "2023.01.22",
+        "white": "kfctofu",
+        "black": "Ecrimson23",
+        "result": "0-1",
+        "ply": 16,
+        "san": "#",
+        "fen_before": "r3kb1r/ppp2ppp/2N1b3/3N4/2BPn3/8/PPP2qPP/R1BQK2R w KQkq - 0 9",
+        "fen_after": "r3kb1r/ppp2ppp/2N1b3/3N4/2BPn3/8/PPP2qPP/R1BQK2R w KQkq - 0 9",
+        "theme": "back_rank_mate",
+        "note": "Final position is a mate with the king boxed near the back rank.",
+        "severity": 8,
+        "engine": null
+      },
+      {
+        "source": "chess.com",
+        "link": "https://www.chess.com/game/live/68117648339",
+        "date": "2023.01.22",
+        "white": "kfctofu",
+        "black": "HaymeStark",
+        "result": "0-1",
+        "ply": 54,
+        "san": "#",
+        "fen_before": "8/p3kp2/6p1/1p2p2p/1P2P3/3P3P/1Pr3qK/5N2 w - - 0 28",
+        "fen_after": "8/p3kp2/6p1/1p2p2p/1P2P3/3P3P/1Pr3qK/5N2 w - - 0 28",
+        "theme": "back_rank_mate",
+        "note": "Final position is a mate with the king boxed near the back rank.",
+        "severity": 8,
+        "engine": null
+      }
+    ],
+    "endgame_conversion": [],
+    "time_pressure": []
+  }
+}

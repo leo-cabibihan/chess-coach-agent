@@ -1,0 +1,37 @@
+criteria:
+  - name: Problem Description
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }]
+  - name: Knowledge Base and Retrieval
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }]
+  - name: Agents and LLM
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }, { points: 3 }]
+  - name: Code Organization
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }]
+  - name: Testing
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }]
+  - name: Evaluation
+    kind: single
+    items: [{ points: 0 }, { points: 2 }, { points: 3 }]
+  - name: Evaluation bonus points
+    kind: checklist
+    items: [{ points: 2 }, { points: 2 }]
+  - name: Monitoring
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }]
+  - name: Monitoring bonus points
+    kind: checklist
+    items: [{ points: 1 }, { points: 2 }]
+  - name: Reproducibility
+    kind: single
+    items: [{ points: 0 }, { points: 1 }, { points: 2 }]
+  - name: Best Coding Practices
+    kind: checklist
+    items: [{ points: 1 }, { points: 2 }, { points: 1 }, { points: 1 }, { points: 2 }]
+  - name: Additional Bonus Points
+    kind: checklist
+    items: [{ points: 1 }, { points: 2 }]

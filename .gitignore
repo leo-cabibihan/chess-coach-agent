@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+node_modules/
+dist/
+*.tsbuildinfo
+backend/data/logs/
+backend/.ruff_cache/
