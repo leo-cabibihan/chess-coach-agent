@@ -1,5 +1,7 @@
 # Chess Coach Agent
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/leo-cabibihan/chess-coach-agent)
+
 Chess Coach Agent is an AI Engineering Buildcamp capstone project. It turns a player's Chess.com,
 Lichess, or uploaded PGN games into coachable critical moments, practical explanations, and drills.
 
