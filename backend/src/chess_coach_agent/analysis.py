@@ -42,11 +42,29 @@ def _moment_text(theme: str, played: str, best: str | None, swing: float | None)
         "loose_piece": f"{played} left material tactically vulnerable.",
         "missed_tactic": f"{played} missed a forcing resource in the position.",
         "king_safety": f"{played} did not address king safety or back-rank pressure.",
-        "opening_drift": f"{played} spent time without improving development enough.",
+        "opening_drift": (
+            f"{played} continued an early queen detour. Repeated queen moves gave away development "
+            "tempi and delayed king safety."
+        ),
         "endgame_conversion": f"{played} made the conversion harder in a simplified position.",
     }.get(theme, f"{played} changed the character of the position.")
-    better = f"Look at {best_text} first and ask what threat it creates or prevents."
-    drill = "Set the position on a board and list candidate checks, captures, and threats before choosing."
+    better = {
+        "opening_drift": (
+            f"Prefer {best_text} and compare developed minor pieces before moving the queen again. "
+            "Choose the move that brings you closer to castling."
+        ),
+        "loose_piece": f"Look at {best_text}, then count attackers and defenders on every rook, bishop, knight, and queen.",
+    }.get(theme, f"Look at {best_text} first and ask what threat it creates or prevents.")
+    drill = {
+        "opening_drift": (
+            "Replay the first ten moves and mark every queen move, developed minor piece, and missed "
+            "chance to castle. Find a development move for each unnecessary queen tempo."
+        ),
+        "loose_piece": (
+            "Set the position on a board, identify every attacked and undefended piece, then list checks, "
+            "captures, and threats."
+        ),
+    }.get(theme, "Set the position on a board and list candidate checks, captures, and threats before choosing.")
     return summary, what, better, drill
 
 

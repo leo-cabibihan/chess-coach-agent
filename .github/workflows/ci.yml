@@ -18,6 +18,8 @@ jobs:
           cd backend
           uv sync --extra dev
           uv run pytest -q
+          uv run python -m chess_coach_agent.evaluation --dataset data/eval/critical_moments.jsonl
+          uv run python -m chess_coach_agent.retrieval_evaluation --dataset data/eval/retrieval.jsonl
       - name: Frontend build
         run: |
           cd frontend

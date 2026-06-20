@@ -60,3 +60,12 @@ export type AnalyzeResponse = {
 };
 
 export type Platform = 'chess.com' | 'lichess';
+
+export type MonitoringSummary = {
+  total_events: number;
+  event_counts: Record<string, number>;
+  feedback_count: number;
+  helpful_rate: number | null;
+  feedback_themes: Record<string, number>;
+  recent_events: Array<Record<string, unknown>>;
+};

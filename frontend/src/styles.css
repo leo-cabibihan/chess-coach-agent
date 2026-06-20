@@ -302,6 +302,29 @@ textarea {
   gap: 8px;
 }
 
+.moment-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  color: #5c6976;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.moment-feedback button, .monitoring-head button {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #d5dee6;
+  border-radius: 7px;
+  color: #344252;
+  background: #ffffff;
+  cursor: pointer;
+}
+
 .badge, .score-badge {
   padding: 4px 9px;
   border-radius: 6px;
@@ -371,6 +394,88 @@ textarea {
 
 .training-list li {
   margin: 8px 0;
+}
+
+.monitoring-panel {
+  margin-top: 24px;
+  padding: 22px 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 14px 45px rgba(52, 70, 88, 0.11);
+}
+
+.monitoring-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.monitoring-head .panel-title {
+  margin: 0;
+}
+
+.monitoring-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid #e2e8ee;
+  border-bottom: 1px solid #e2e8ee;
+  margin: 18px 0;
+}
+
+.monitoring-metrics div {
+  padding: 16px 12px;
+  border-right: 1px solid #e2e8ee;
+}
+
+.monitoring-metrics div:last-child {
+  border-right: 0;
+}
+
+.monitoring-metrics strong, .monitoring-metrics span {
+  display: block;
+}
+
+.monitoring-metrics strong {
+  font-size: 25px;
+}
+
+.monitoring-metrics span, .monitoring-empty {
+  margin-top: 4px;
+  color: #667380;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.event-bars {
+  display: grid;
+  gap: 9px;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 28px;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.event-row > span {
+  color: #4e5b68;
+  text-transform: capitalize;
+}
+
+.event-row > div {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #e9eef2;
+}
+
+.event-row i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #2d8a58;
 }
 
 .game-panel {
@@ -576,6 +681,15 @@ textarea {
   }
   .moment-tabs {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .monitoring-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .monitoring-metrics div:nth-child(2) {
+    border-right: 0;
+  }
+  .event-row {
+    grid-template-columns: 120px 1fr 24px;
   }
   h1 {
     font-size: 27px;

@@ -6,8 +6,8 @@ from fastapi.responses import RedirectResponse
 
 from .agent import ChessCoachAgent, sample_pgn
 from .llm import answer_question
-from .models import AnalyzeRequest, AnalyzeResponse, ChatRequest, ChatResponse, ImportRequest
-from .monitoring import log_event
+from .models import AnalyzeRequest, AnalyzeResponse, ChatRequest, ChatResponse, FeedbackRequest, ImportRequest
+from .monitoring import log_event, monitoring_summary
 
 
 app = FastAPI(title="Chess Coach Agent API", version="0.1.0")
@@ -51,7 +51,20 @@ async def import_games(request: ImportRequest) -> AnalyzeResponse:
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     log_event("chat_requested", {"has_analysis": request.analysis is not None})
-    return await answer_question(request.question, request.analysis)
+    response = await answer_question(request.question, request.analysis)
+    log_event("chat_completed", {"used_llm": response.used_llm, "retrieved_notes": len(response.retrieved_notes)})
+    return response
+
+
+@app.post("/api/feedback")
+def feedback(request: FeedbackRequest) -> dict[str, str]:
+    log_event("moment_feedback", request.model_dump())
+    return {"status": "recorded"}
+
+
+@app.get("/api/monitoring")
+def monitoring() -> dict:
+    return monitoring_summary()
 
 
 @app.get("/api/trends")

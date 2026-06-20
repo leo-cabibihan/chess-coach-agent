@@ -8,4 +8,5 @@ node_modules/
 dist/
 *.tsbuildinfo
 backend/data/logs/
+backend/data/eval/feedback_candidates.jsonl
 backend/.ruff_cache/

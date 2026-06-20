@@ -1,4 +1,4 @@
-.PHONY: install test eval score dev backend frontend build
+.PHONY: install test eval eval-llm retrieval-eval feedback-export score dev backend frontend build
 
 install:
 	cd backend && uv sync --extra dev
@@ -10,6 +10,15 @@ test:
 
 eval:
 	cd backend && uv run python -m chess_coach_agent.evaluation --dataset data/eval/critical_moments.jsonl
+
+retrieval-eval:
+	cd backend && uv run python -m chess_coach_agent.retrieval_evaluation --dataset data/eval/retrieval.jsonl
+
+eval-llm:
+	cd backend && uv run python -m chess_coach_agent.judge_evaluation --dataset data/eval/critical_moments.jsonl --tune
+
+feedback-export:
+	cd backend && uv run python -m chess_coach_agent.monitoring --export-candidates data/eval/feedback_candidates.jsonl
 
 score:
 	python3 scripts/score_project.py

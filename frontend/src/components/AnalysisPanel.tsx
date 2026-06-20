@@ -1,14 +1,18 @@
-import { BookOpen, Brain, CircleDot, Target } from 'lucide-react';
+import { BookOpen, Brain, CircleDot, Target, ThumbsDown, ThumbsUp } from 'lucide-react';
 import type { CoachAnalysis, CriticalMoment } from '../lib/types';
 
 export function AnalysisPanel({
   analysis,
   selectedMoment,
-  onSelectMoment
+  onSelectMoment,
+  onFeedback,
+  feedbackStatus
 }: {
   analysis: CoachAnalysis | null;
   selectedMoment: CriticalMoment | null;
   onSelectMoment: (moment: CriticalMoment) => void;
+  onFeedback: (moment: CriticalMoment, rating: 'helpful' | 'not_helpful') => void;
+  feedbackStatus: string;
 }) {
   if (!analysis) {
     return (
@@ -63,6 +67,23 @@ export function AnalysisPanel({
                 <strong>{selectedMoment.move_number}... {selectedMoment.best_san || 'Candidate move'}</strong>
                 <small>What the coach suggests checking</small>
               </div>
+            </div>
+            <div className="moment-feedback">
+              <span>{feedbackStatus || 'Was this coaching useful?'}</span>
+              <button
+                aria-label="Mark coaching helpful"
+                title="Helpful"
+                onClick={() => onFeedback(selectedMoment, 'helpful')}
+              >
+                <ThumbsUp size={17} />
+              </button>
+              <button
+                aria-label="Mark coaching not helpful"
+                title="Not helpful"
+                onClick={() => onFeedback(selectedMoment, 'not_helpful')}
+              >
+                <ThumbsDown size={17} />
+              </button>
             </div>
           </div>
 

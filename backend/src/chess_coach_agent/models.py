@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -72,7 +72,7 @@ class AnalyzeRequest(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     analyses: list[CoachAnalysis]
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ChatRequest(BaseModel):
@@ -90,6 +90,15 @@ class ImportRequest(BaseModel):
     username: str
     platform: Literal["chess.com", "lichess"]
     max_games: int = 20
+
+
+class FeedbackRequest(BaseModel):
+    moment_id: str
+    game_id: str
+    rating: Literal["helpful", "not_helpful"]
+    theme: str
+    fen: str
+    comment: str = ""
 
 
 class TrendPoint(BaseModel):

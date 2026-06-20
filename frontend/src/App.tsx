@@ -3,7 +3,8 @@ import { Activity, AlertCircle, Database, Loader2, MessageCircle, Upload } from 
 import { AnalysisPanel } from './components/AnalysisPanel';
 import { GameList } from './components/GameList';
 import { GamePanel } from './components/GamePanel';
-import { analyzeGames, askCoach, getSample, importGames } from './lib/api';
+import { MonitoringDashboard } from './components/MonitoringDashboard';
+import { analyzeGames, askCoach, getSample, importGames, sendMomentFeedback } from './lib/api';
 import type { CoachAnalysis, CriticalMoment, Platform } from './lib/types';
 import './styles.css';
 
@@ -21,6 +22,8 @@ function App() {
   const [maxGames, setMaxGames] = useState(10);
   const [question, setQuestion] = useState('');
   const [coachAnswer, setCoachAnswer] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState('');
+  const [monitoringRefresh, setMonitoringRefresh] = useState(0);
 
   useEffect(() => {
     getSample().then((sample) => {
@@ -53,6 +56,7 @@ function App() {
     setSelectedMoment(next?.moments[0] || null);
     setCurrentPly(next?.moments[0]?.ply || 0);
     setCoachAnswer('');
+    setFeedbackStatus('');
   }
 
   async function runAnalysis() {
@@ -66,6 +70,7 @@ function App() {
       activateGame(0, result.analyses);
       const totalMoments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
       setStatus(`Analyzed ${result.analyses.length} games with ${totalMoments} coachable moments`);
+      setMonitoringRefresh((value) => value + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
       setStatus('Could not analyze PGN');
@@ -86,6 +91,7 @@ function App() {
       activateGame(0, result.analyses);
       const totalMoments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
       setStatus(`Imported ${result.analyses.length} ${platform} games with ${totalMoments} moments`);
+      setMonitoringRefresh((value) => value + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : `Could not import from ${platform}`);
       setStatus('Import failed');
@@ -103,11 +109,23 @@ function App() {
       const answer = await askCoach(question, analysis);
       setCoachAnswer(answer);
       setStatus('Coach answer ready');
+      setMonitoringRefresh((value) => value + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Coach chat failed');
       setStatus('Coach chat failed');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function recordFeedback(moment: CriticalMoment, rating: 'helpful' | 'not_helpful') {
+    setFeedbackStatus('Saving feedback...');
+    try {
+      await sendMomentFeedback(moment, rating);
+      setFeedbackStatus(rating === 'helpful' ? 'Marked helpful' : 'Marked for review');
+      setMonitoringRefresh((value) => value + 1);
+    } catch {
+      setFeedbackStatus('Feedback could not be saved');
     }
   }
 
@@ -168,7 +186,8 @@ function App() {
         <AnalysisPanel analysis={analysis} selectedMoment={selectedMoment} onSelectMoment={(moment) => {
           setSelectedMoment(moment);
           setCurrentPly(moment.ply);
-        }} />
+          setFeedbackStatus('');
+        }} onFeedback={recordFeedback} feedbackStatus={feedbackStatus} />
         <GamePanel analysis={analysis} selectedMoment={selectedMoment} currentPly={currentPly} setCurrentPly={setCurrentPly} />
       </div>
 
@@ -187,6 +206,8 @@ function App() {
         </div>
         {coachAnswer && <p className="coach-answer">{coachAnswer}</p>}
       </section>
+
+      <MonitoringDashboard refreshKey={monitoringRefresh} />
     </main>
   );
 }

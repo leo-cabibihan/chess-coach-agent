@@ -1,0 +1,8 @@
+{"id":"forcing_moves","query":"I keep considering quiet plans before checks captures and threats","expected_title":"Tactical Vision"}
+{"id":"hanging_piece","query":"My undefended bishop was attacked and I lost it to a fork","expected_title":"Loose Pieces"}
+{"id":"early_queen","query":"I moved my queen repeatedly and fell behind in development","expected_title":"Opening Principles"}
+{"id":"uncastled_king","query":"I delayed castling and allowed checks against my exposed king","expected_title":"King Safety"}
+{"id":"remove_defender","query":"I missed a capture that removed the defender and won material","expected_title":"Tactical Vision"}
+{"id":"pawn_grab","query":"I grabbed a pawn instead of developing minor pieces and castling","expected_title":"Opening Principles"}
+{"id":"back_rank","query":"My king had no luft and was trapped by a back rank threat","expected_title":"King Safety"}
+{"id":"skewer_target","query":"An undefended rook became the target of a pin and skewer","expected_title":"Loose Pieces"}

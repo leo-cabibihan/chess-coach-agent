@@ -43,16 +43,30 @@ def score_problem() -> Score:
 
 def score_knowledge() -> Score:
     has_kb = any_file("backend/data/knowledge/*.md")
-    has_test = exists("backend/tests/test_retrieval.py")
-    return Score("Knowledge Base and Retrieval", 2 if has_kb and has_test else 1 if has_kb else 0, 2, "Chess principle KB and retrieval test are present.")
+    evaluated = all(
+        exists(path)
+        for path in [
+            "backend/data/eval/retrieval.jsonl",
+            "backend/src/chess_coach_agent/retrieval_evaluation.py",
+            "docs/evaluation_results.md",
+        ]
+    )
+    selected = contains("backend/src/chess_coach_agent/knowledge.py", 'strategy: Literal["bm25", "title"] = "bm25"')
+    return Score(
+        "Knowledge Base and Retrieval",
+        2 if has_kb and evaluated and selected else 1 if has_kb else 0,
+        2,
+        "BM25 is benchmarked against a title baseline and used by default.",
+    )
 
 
 def score_agents() -> Score:
     agent = read("backend/src/chess_coach_agent/agent.py")
     llm = read("backend/src/chess_coach_agent/llm.py")
     tool_count = sum(agent.count(term) for term in ["import_pgn_text", "import_platform_games", "retrieve_chess_principles", "generate_trend_summary"])
-    ok = "OPENROUTER_API_KEY" in llm and tool_count >= 4
-    return Score("Agents and LLM", 3 if ok else 2 if tool_count >= 2 else 0, 3, f"Agent tool references: {tool_count}; OpenRouter path documented.")
+    llm_tools = all(term in llm for term in ["retrieve_principles", "inspect_critical_moments", "build_training_drill"])
+    ok = "OPENROUTER_API_KEY" in llm and tool_count >= 4 and llm_tools
+    return Score("Agents and LLM", 3 if ok else 2 if tool_count >= 2 else 0, 3, "MiniMax plans multiple documented coach tools before answer synthesis.")
 
 
 def score_code_org() -> Score:
@@ -62,31 +76,34 @@ def score_code_org() -> Score:
 
 def score_testing() -> Score:
     tests = list((ROOT / "backend/tests").glob("test_*.py"))
-    return Score("Testing", 2 if len(tests) >= 5 and contains("README.md", "pytest") else 1 if tests else 0, 2, f"{len(tests)} backend tests are present.")
+    has_judge = exists("backend/tests/test_judge.py") and contains("README.md", "fake judge", "test suite")
+    return Score("Testing", 2 if tests and has_judge else 1 if tests else 0, 2, f"{len(tests)} test modules plus a controlled judge test.")
 
 
 def score_evaluation() -> Score:
-    ok = exists("backend/data/eval/critical_moments.jsonl") and exists("backend/src/chess_coach_agent/evaluation.py")
-    documented = contains("README.md", "hand-crafted", "evaluation")
-    return Score("Evaluation", 3 if ok and documented else 2 if ok else 0, 3, "Hand-crafted critical moment eval and runner are present.")
+    ground_truth = exists("backend/data/eval/critical_moments.jsonl")
+    llm_judge = exists("backend/src/chess_coach_agent/judge_evaluation.py")
+    tuned = contains("docs/evaluation_results.md", "concise", "grounded", "after tuning")
+    return Score("Evaluation", 3 if ground_truth and llm_judge and tuned else 2 if ground_truth and llm_judge else 0, 3, "MiniMax judge results document prompt comparison and tuning.")
 
 
 def score_eval_bonus() -> Score:
-    handcrafted = exists("backend/data/eval/critical_moments.jsonl")
-    manual = exists("docs/scorecard.md")
-    return Score("Evaluation bonus points", (2 if handcrafted else 0) + (2 if manual else 0), 4, "Hand-crafted eval data and self-score are present.")
+    handcrafted = contains("backend/data/eval/critical_moments.jsonl", "reviewer_notes")
+    manual = contains("docs/manual_evaluation.md", "manual verdict", "2/2 acceptable")
+    return Score("Evaluation bonus points", (2 if handcrafted else 0) + (2 if manual else 0), 4, "Ground truth is hand-authored and manually reviewed.")
 
 
 def score_monitoring() -> Score:
     logs = exists("backend/src/chess_coach_agent/monitoring.py")
-    docs = contains("docs/monitoring.md", "jsonl", "events")
-    return Score("Monitoring", 2 if logs and docs else 1 if logs else 0, 2, "JSONL monitoring and docs are present.")
+    dashboard = exists("frontend/src/components/MonitoringDashboard.tsx") and contains("backend/src/chess_coach_agent/api.py", "/api/monitoring")
+    docs = contains("docs/monitoring.md", "jsonl", "dashboard")
+    return Score("Monitoring", 2 if logs and dashboard and docs else 1 if logs else 0, 2, "JSONL events are displayed in the React monitoring dashboard.")
 
 
 def score_monitoring_bonus() -> Score:
-    feedback_path = contains("docs/monitoring.md", "feedback", "evaluation data")
-    log_to_eval = contains("docs/monitoring.md", "logs", "ground truth")
-    return Score("Monitoring bonus points", (1 if feedback_path else 0) + (2 if log_to_eval else 0), 3, "Docs describe promoting logs/feedback into eval data.")
+    feedback_path = contains("backend/src/chess_coach_agent/api.py", "/api/feedback") and contains("frontend/src/components/AnalysisPanel.tsx", "onFeedback")
+    log_to_eval = contains("backend/src/chess_coach_agent/monitoring.py", "export_feedback_candidates", "review_status")
+    return Score("Monitoring bonus points", (1 if feedback_path else 0) + (2 if log_to_eval else 0), 3, "Feedback is collected and exportable as reviewable eval candidates.")
 
 
 def score_reproducibility() -> Score:

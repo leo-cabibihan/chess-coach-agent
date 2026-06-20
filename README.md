@@ -24,20 +24,21 @@ OpenRouter commentary, deterministic fallback explanations, and daily challenge 
 - Find up to four critical moments per game.
 - Compare the move played against the engine or fallback best candidate.
 - Explain what happened, the better plan, the chess principle, and a drill.
-- Retrieve chess-principle notes from a local knowledge base.
+- Retrieve chess-principle notes with the benchmark-selected BM25 search strategy.
 - Ask follow-up questions through OpenRouter when `OPENROUTER_API_KEY` is configured.
-- Log analysis/chat events locally for monitoring and future evaluation data.
+- Let MiniMax select multiple coaching tools before synthesizing each follow-up answer.
+- Log analysis/chat events, collect moment feedback, and display quality metrics.
 - Show the analysis in a React frontend with a board and move history.
 
 ## Course Rubric Coverage
 
 - **Problem description:** this README states the user problem and project goal.
-- **Knowledge base and retrieval:** `backend/data/knowledge/` contains chess principle notes; retrieval is tested.
+- **Knowledge base and retrieval:** BM25 was selected through an eight-query retrieval benchmark.
 - **Agents and LLM:** `backend/src/chess_coach_agent/agent.py` orchestrates multiple tools; `llm.py` uses OpenRouter when configured.
 - **Code organization:** backend is a Python package under `backend/src`; frontend is a Vite React app.
-- **Testing:** backend tests cover PGN parsing, analysis, retrieval, API, and evaluation runner.
-- **Evaluation:** `backend/data/eval/critical_moments.jsonl` is a hand-crafted dataset with expected tactical themes.
-- **Monitoring:** `monitoring.py` writes JSONL events; docs explain how logs become future eval rows.
+- **Testing:** unit/API tests plus a mocked LLM-judge test run without network credentials.
+- **Evaluation:** MiniMax judges coaching output against a hand-crafted, manually reviewed dataset and compares prompt formats.
+- **Monitoring:** a React dashboard displays JSONL metrics; thumbs feedback can be exported as evaluation candidates.
 - **Reproducibility:** sample PGN data is included; setup commands are below.
 - **Bonus:** React UI, Docker, docker-compose, Makefile, uv dependency workflow, and GitHub Actions CI are included.
 
@@ -82,11 +83,11 @@ The app works without a model key by using deterministic coach text. To enable L
 
 ```bash
 export OPENROUTER_API_KEY=...
-export OPENROUTER_MODEL=openai/gpt-4o-mini
+export OPENROUTER_MODEL=minimax/minimax-m3
 ```
 
-The model is only used for follow-up coaching explanations. The chess-critical logic remains grounded
-in PGN parsing, legal move generation, optional Stockfish, and local chess-principle retrieval.
+The model is used for follow-up coaching and optional LLM-judge evaluation. Chess-critical logic
+remains grounded in PGN parsing, legal move generation, optional Stockfish, and retrieved principles.
 
 ## Stockfish
 
@@ -101,12 +102,38 @@ still runs for reviewers.
 
 ## Evaluation
 
-Run the hand-crafted evaluation:
+Run deterministic theme evaluation and the retrieval benchmark:
 
 ```bash
 cd backend
 uv run python -m chess_coach_agent.evaluation --dataset data/eval/critical_moments.jsonl
+uv run python -m chess_coach_agent.retrieval_evaluation --dataset data/eval/retrieval.jsonl
 ```
+
+Run the live MiniMax judge and compare the concise and grounded formats:
+
+```bash
+cd backend
+uv run python -m chess_coach_agent.judge_evaluation --dataset data/eval/critical_moments.jsonl --tune
+```
+
+The live judge requires `OPENROUTER_API_KEY`. The regular test suite uses a controlled fake judge,
+so CI stays deterministic. Measured results and the resulting prompt change are in
+`docs/evaluation_results.md`; manual reviews are in `docs/manual_evaluation.md`.
+
+## Monitoring and Feedback
+
+The dashboard at the bottom of the React app reads `GET /api/monitoring`. Helpful/not-helpful
+buttons on each critical moment write feedback events. Export those events for review with:
+
+```bash
+cd backend
+uv run python -m chess_coach_agent.monitoring \
+  --export-candidates data/eval/feedback_candidates.jsonl
+```
+
+Candidate rows are deliberately marked `review_status: candidate`; a person must review them before
+merging them into the hand-crafted ground truth dataset. See `docs/monitoring.md`.
 
 Run the capstone self-scorer:
 

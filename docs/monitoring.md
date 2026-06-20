@@ -1,35 +1,35 @@
 # Monitoring
 
-The app records local JSONL events in `backend/data/logs/events.jsonl`.
+The app records local JSONL events in `backend/data/logs/events.jsonl`. The React **Quality
+monitoring** dashboard calls `GET /api/monitoring` and displays total events, completed analyses,
+feedback volume, helpful rate, and event-count bars.
 
-Recorded events:
+Recorded events include `analysis_requested`, `analysis_completed`, `games_imported`,
+`chat_requested`, `chat_completed`, and `moment_feedback`. Chat completion events record whether the
+OpenRouter model was used. Analysis completion events record game, moment, and theme counts.
 
-- `analysis_requested`
-- `analysis_completed`
-- `games_imported`
-- `chat_requested`
+## User Feedback
 
-Each row includes a UTC timestamp and request metadata. These logs are intentionally simple so they
-remain reproducible without cloud credentials.
+Each critical moment has helpful and not-helpful buttons. `POST /api/feedback` records the moment ID,
+game ID, detected theme, position FEN, rating, and optional comment. Feedback immediately appears in
+the dashboard after it refreshes.
 
-## Feedback to Evaluation Data
+## Logs to Evaluation Candidates
 
-The next iteration should add thumbs-up/down feedback in the React UI. Reviewed feedback rows can be
-promoted into `backend/data/eval/critical_moments.jsonl` by adding:
+Convert feedback events into a review queue:
 
-- the PGN or FEN,
-- the player,
-- the expected theme,
-- reviewer notes explaining why the label is correct.
+```bash
+cd backend
+uv run python -m chess_coach_agent.monitoring \
+  --export-candidates data/eval/feedback_candidates.jsonl
+```
 
-This supports the monitoring bonus criterion: logs and feedback can become future ground truth.
+The exporter includes the FEN, expected theme, feedback rating, and reviewer comment. Every exported
+row has `review_status: candidate`; it must be manually verified before joining the ground truth set.
+This keeps user feedback useful without silently treating noisy ratings as truth.
 
-## Optional Production Monitoring
+Print the same summary used by the dashboard with:
 
-For a deployed version, ship the JSONL events to an OpenTelemetry backend or Logfire. Useful charts:
-
-- analyses per user,
-- average number of critical moments,
-- most common themes,
-- OpenRouter success/fallback rate,
-- evaluation pass rate over time.
+```bash
+uv run python -m chess_coach_agent.monitoring --summary
+```
