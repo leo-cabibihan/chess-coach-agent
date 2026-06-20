@@ -30,6 +30,18 @@ OpenRouter commentary, deterministic fallback explanations, and daily challenge 
 - Log analysis/chat events, collect moment feedback, and display quality metrics.
 - Show the analysis in a React frontend with a board and move history.
 
+## Routed Frontend
+
+The React app uses TanStack Router with intent preloading and scroll restoration:
+
+- `/analyze` separates online import from pasted PGN.
+- `/games` is the analyzed-game library.
+- `/games/:gameId?moment=:momentId` makes game and critical-moment selection URL-addressable.
+- `/coach` provides focused MiniMax chat with selectable game context.
+- `/quality` displays monitoring and feedback metrics.
+
+The active workspace is stored in browser session storage so route refreshes preserve analyzed games.
+
 ## Course Rubric Coverage
 
 - **Problem description:** this README states the user problem and project goal.

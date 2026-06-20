@@ -12,6 +12,11 @@ body {
   margin: 0;
 }
 
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 button, input, textarea, select {
   font: inherit;
 }
@@ -20,6 +25,322 @@ main {
   max-width: 1360px;
   margin: 0 auto;
   padding: 28px;
+}
+
+.app-frame {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 214px minmax(0, 1fr);
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 22px 16px;
+  background: #18231d;
+  color: #dfe9e3;
+  border-right: 1px solid #29382f;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 10px 18px;
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.app-sidebar nav {
+  display: grid;
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid #304039;
+}
+
+.app-sidebar nav a {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 9px 11px;
+  border-radius: 7px;
+  color: #aebdb5;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.app-sidebar nav a:hover {
+  color: #ffffff;
+  background: #223129;
+}
+
+.app-sidebar nav a.active {
+  color: #ffffff;
+  background: #2e7c52;
+}
+
+.app-sidebar nav small {
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 11px;
+}
+
+.app-content {
+  min-width: 0;
+}
+
+.route-page {
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.page-eyebrow {
+  display: block;
+  color: #397252;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.page-header h1 {
+  margin: 6px 0 0;
+}
+
+.page-header p {
+  margin: 8px 0 0;
+  color: #61707d;
+}
+
+.page-actions {
+  flex: 0 0 auto;
+}
+
+.route-action {
+  white-space: nowrap;
+}
+
+.intake-workspace {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.82fr) 40px minmax(420px, 1.18fr);
+  align-items: stretch;
+  padding: 24px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 45px rgba(52, 70, 88, 0.11);
+}
+
+.intake-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-heading strong, .section-heading span {
+  display: block;
+}
+
+.section-heading span {
+  margin-top: 2px;
+  color: #6c7884;
+  font-size: 12px;
+}
+
+.intake-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.intake-section button {
+  align-self: flex-start;
+}
+
+.pgn-import textarea {
+  min-height: 245px;
+}
+
+.intake-divider {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: #81909c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.intake-divider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: #e0e7ed;
+}
+
+.intake-divider span {
+  z-index: 1;
+  padding: 8px 0;
+  background: #ffffff;
+}
+
+.route-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 14px;
+  color: #54636f;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.route-status.error {
+  color: #b4232d;
+}
+
+.continue-review {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #f8fbf9;
+}
+
+.continue-review strong, .continue-review span {
+  display: block;
+}
+
+.continue-review span {
+  margin-top: 3px;
+  color: #63717d;
+  font-size: 13px;
+}
+
+.continue-review a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #17653d;
+  font-weight: 800;
+}
+
+.games-page .game-list-panel {
+  margin: 0;
+}
+
+.empty-route {
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px dashed #cad5dd;
+  border-radius: 8px;
+  color: #687581;
+  background: #f8fafb;
+}
+
+.empty-route h2, .empty-route p {
+  margin: 0;
+}
+
+.review-page .stat-row {
+  margin: -10px 0 20px;
+}
+
+.review-layout {
+  align-items: start;
+}
+
+.review-layout .game-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.coach-workspace {
+  padding: 24px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 45px rgba(52, 70, 88, 0.11);
+}
+
+.coach-workspace > label {
+  max-width: 620px;
+}
+
+.coach-prompt-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.coach-prompt-row textarea {
+  min-height: 112px;
+}
+
+.coach-prompt-row button {
+  min-height: 44px;
+}
+
+.routed-answer {
+  margin-top: 20px;
+}
+
+.routed-answer h2, .routed-answer h3 {
+  margin: 22px 0 8px;
+  font-size: 18px;
+}
+
+.routed-answer h2:first-child, .routed-answer h3:first-child {
+  margin-top: 0;
+}
+
+.routed-answer p, .routed-answer li {
+  line-height: 1.65;
+}
+
+.routed-answer ul, .routed-answer ol {
+  padding-left: 22px;
+}
+
+.coach-placeholder {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  margin-top: 20px;
+  border-top: 1px solid #e2e8ee;
+  color: #71808c;
+  text-align: center;
+}
+
+.quality-page .monitoring-panel {
+  margin-top: 0;
 }
 
 .app-header {
@@ -693,5 +1014,82 @@ textarea {
   }
   h1 {
     font-size: 27px;
+  }
+  .intake-workspace {
+    grid-template-columns: 1fr;
+  }
+  .intake-divider {
+    min-height: 40px;
+  }
+  .intake-divider::before {
+    top: 50%;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: auto;
+    height: 1px;
+  }
+  .intake-divider span {
+    padding: 0 8px;
+  }
+  .review-layout .game-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-frame {
+    display: block;
+  }
+  .app-sidebar {
+    position: fixed;
+    z-index: 20;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: auto;
+    padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+    border-top: 1px solid #304039;
+    border-right: 0;
+  }
+  .brand {
+    display: none;
+  }
+  .app-sidebar nav {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 0;
+    border: 0;
+  }
+  .app-sidebar nav a {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    min-height: 52px;
+    padding: 5px;
+    font-size: 11px;
+  }
+  .app-sidebar nav small {
+    display: none;
+  }
+  .app-content {
+    padding-bottom: 76px;
+  }
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .coach-prompt-row {
+    grid-template-columns: 1fr;
+  }
+  .coach-prompt-row button {
+    justify-content: center;
+  }
+  .continue-review {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
