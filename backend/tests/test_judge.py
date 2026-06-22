@@ -26,6 +26,6 @@ def test_llm_judge_pipeline_uses_ground_truth_and_selects_grounded_prompt():
             judge=fake_judge,
         )
     )
-    assert result["dataset_size"] == 2
+    assert result["dataset_size"] >= 10
     assert result["winner"] == "grounded"
     assert result["variants"]["grounded"]["pass_rate"] == 1.0

@@ -317,7 +317,32 @@ function CoachPage() {
           </button>
         </div>
         {workspace.coachAnswer ? (
-          <div className="coach-answer routed-answer"><ReactMarkdown>{workspace.coachAnswer}</ReactMarkdown></div>
+          <div className="coach-answer routed-answer">
+            <ReactMarkdown>{workspace.coachAnswer}</ReactMarkdown>
+            {workspace.coachResponse?.coaching && (
+              <div className="coach-structured">
+                <div>
+                  <span>Principle</span>
+                  <strong>{workspace.coachResponse.coaching.principle}</strong>
+                </div>
+                <div>
+                  <span>Practice drill</span>
+                  <strong>{workspace.coachResponse.coaching.drill}</strong>
+                </div>
+                {workspace.coachResponse.coaching.evidence.length > 0 && (
+                  <div>
+                    <span>Evidence</span>
+                    <ul>{workspace.coachResponse.coaching.evidence.map((item) => <li key={item}>{item}</li>)}</ul>
+                  </div>
+                )}
+                <footer>
+                  {workspace.coachResponse.used_llm ? workspace.coachResponse.usage?.model : 'Deterministic fallback'}
+                  {' · '}{workspace.coachResponse.tools_used.length} tools
+                  {' · '}{Math.round(workspace.coachResponse.coaching.confidence * 100)}% confidence
+                </footer>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="coach-placeholder">The coach will use engine moments, retrieved principles, and a tailored drill.</div>
         )}

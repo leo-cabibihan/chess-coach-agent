@@ -80,10 +80,39 @@ class ChatRequest(BaseModel):
     analysis: CoachAnalysis | None = None
 
 
+class CoachingOutput(BaseModel):
+    answer: str = Field(description="A concise, practical answer in Markdown")
+    evidence: list[str] = Field(
+        default_factory=list,
+        description="Concrete engine, move, or retrieved-principle facts supporting the answer",
+    )
+    recommended_move: str | None = Field(
+        default=None,
+        description="A legal SAN move when the supplied analysis supports one",
+    )
+    principle: str = Field(description="The main reusable chess principle")
+    drill: str = Field(description="A specific practice exercise based on the player's game")
+    confidence: float = Field(ge=0, le=1)
+
+
+class ModelUsage(BaseModel):
+    model: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+    requests: int = 0
+    tool_calls: int = 0
+    estimated_cost_usd: float = 0
+
+
 class ChatResponse(BaseModel):
     answer: str
     used_llm: bool = False
     retrieved_notes: list[str] = Field(default_factory=list)
+    coaching: CoachingOutput | None = None
+    tools_used: list[str] = Field(default_factory=list)
+    usage: ModelUsage | None = None
+    trace_id: str | None = None
 
 
 class ImportRequest(BaseModel):

@@ -1,5 +1,6 @@
 import type {
   AnalyzeResponse,
+  ChatResponse,
   CoachAnalysis,
   CriticalMoment,
   GamePreviewResponse,
@@ -47,15 +48,14 @@ export async function previewPlayerGames(
   return response.json();
 }
 
-export async function askCoach(question: string, analysis: CoachAnalysis | null): Promise<string> {
+export async function askCoach(question: string, analysis: CoachAnalysis | null): Promise<ChatResponse> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, analysis })
   });
   if (!response.ok) throw new Error('Coach chat failed');
-  const payload = await response.json();
-  return payload.answer;
+  return response.json();
 }
 
 export async function sendMomentFeedback(

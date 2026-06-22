@@ -84,11 +84,44 @@ export type GamePreviewResponse = {
   games: GamePreview[];
 };
 
+export type CoachingOutput = {
+  answer: string;
+  evidence: string[];
+  recommended_move: string | null;
+  principle: string;
+  drill: string;
+  confidence: number;
+};
+
+export type ChatResponse = {
+  answer: string;
+  used_llm: boolean;
+  retrieved_notes: string[];
+  coaching: CoachingOutput | null;
+  tools_used: string[];
+  usage: {
+    model: string;
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    requests: number;
+    tool_calls: number;
+    estimated_cost_usd: number;
+  } | null;
+  trace_id: string | null;
+};
+
 export type MonitoringSummary = {
   total_events: number;
   event_counts: Record<string, number>;
   feedback_count: number;
   helpful_rate: number | null;
   feedback_themes: Record<string, number>;
+  llm_calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  estimated_cost_usd: number;
+  average_chat_latency_ms: number | null;
+  tool_usage: Record<string, number>;
   recent_events: Array<Record<string, unknown>>;
 };

@@ -41,6 +41,13 @@ export function MonitoringDashboard({ refreshKey }: { refreshKey: number }) {
               <strong>{summary.helpful_rate === null ? 'N/A' : `${Math.round(summary.helpful_rate * 100)}%`}</strong>
               <span>Helpful</span>
             </div>
+            <div><strong>{summary.input_tokens + summary.output_tokens}</strong><span>Tokens</span></div>
+            <div><strong>${summary.estimated_cost_usd.toFixed(4)}</strong><span>Est. cost</span></div>
+            <div>
+              <strong>{summary.average_chat_latency_ms === null ? 'N/A' : `${Math.round(summary.average_chat_latency_ms)} ms`}</strong>
+              <span>Chat latency</span>
+            </div>
+            <div><strong>{summary.llm_calls}</strong><span>LLM calls</span></div>
           </div>
           <div className="event-bars">
             {eventRows.map((row) => (

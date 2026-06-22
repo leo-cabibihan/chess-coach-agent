@@ -2,6 +2,12 @@
 
 Evaluation was run on 2026-06-20 with the hand-written datasets in `backend/data/eval/`.
 
+The deterministic critical-moment suite was expanded on 2026-06-21 from two manually scored
+coaching cases to 11 regression positions. It currently detects the expected theme in **11/11**
+positions, including loose queens, rooks, bishops, and knights; repeated opening queen moves;
+king-safety neglect for both colors; and immediate tactical collapses. The original two cases remain
+the manually reviewed subset used for the published coaching-quality result below.
+
 ## Retrieval Selection
 
 | Strategy | Hit rate at 3 | Mean reciprocal rank |

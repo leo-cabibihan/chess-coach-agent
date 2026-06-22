@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -48,7 +49,13 @@ def sample() -> dict[str, str]:
 @app.post("/api/analyze", response_model=AnalyzeResponse)
 def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     log_event("analysis_requested", {"player": request.player, "max_games": request.max_games})
-    return agent.import_pgn_text(request.pgn, player=request.player, max_games=request.max_games)
+    started = time.perf_counter()
+    response = agent.import_pgn_text(request.pgn, player=request.player, max_games=request.max_games)
+    log_event(
+        "analysis_timing",
+        {"duration_ms": round((time.perf_counter() - started) * 1000, 2), "games": len(response.analyses)},
+    )
+    return response
 
 
 @app.post("/api/import", response_model=AnalyzeResponse)
@@ -70,8 +77,19 @@ async def preview_games(request: ImportRequest) -> GamePreviewResponse:
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     log_event("chat_requested", {"has_analysis": request.analysis is not None})
+    started = time.perf_counter()
     response = await answer_question(request.question, request.analysis)
-    log_event("chat_completed", {"used_llm": response.used_llm, "retrieved_notes": len(response.retrieved_notes)})
+    log_event(
+        "chat_completed",
+        {
+            "used_llm": response.used_llm,
+            "retrieved_notes": len(response.retrieved_notes),
+            "tools_used": response.tools_used,
+            "trace_id": response.trace_id,
+            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+            "usage": response.usage.model_dump() if response.usage else None,
+        },
+    )
     return response
 
 

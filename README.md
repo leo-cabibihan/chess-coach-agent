@@ -29,9 +29,10 @@ OpenRouter commentary, deterministic fallback explanations, and daily challenge 
 - Compare the move played against the engine or fallback best candidate.
 - Explain what happened, the better plan, the chess principle, and a drill.
 - Retrieve chess-principle notes with the benchmark-selected BM25 search strategy.
-- Ask follow-up questions through OpenRouter when `OPENROUTER_API_KEY` is configured.
-- Let MiniMax select multiple coaching tools before synthesizing each follow-up answer.
-- Log analysis/chat events, collect moment feedback, and display quality metrics.
+- Ask follow-up questions through a PydanticAI agent backed by OpenRouter.
+- Let MiniMax call registered retrieval, position-inspection, critical-moment, and drill tools.
+- Validate every coaching answer as structured Pydantic output with evidence and confidence.
+- Trace agent runs with Logfire and display token, cost, latency, tool, and feedback metrics.
 - Show the analysis in a React frontend with a board and move history.
 
 ## Routed Frontend
@@ -51,11 +52,11 @@ The active workspace is stored in browser session storage so route refreshes pre
 
 - **Problem description:** this README states the user problem and project goal.
 - **Knowledge base and retrieval:** BM25 was selected through an eight-query retrieval benchmark.
-- **Agents and LLM:** `backend/src/chess_coach_agent/agent.py` orchestrates multiple tools; `llm.py` uses OpenRouter when configured.
+- **Agents and LLM:** a PydanticAI agent calls four documented chess tools through OpenRouter/MiniMax.
 - **Code organization:** backend is a Python package under `backend/src`; frontend is a Vite React app.
-- **Testing:** unit/API tests plus a mocked LLM-judge test run without network credentials.
-- **Evaluation:** MiniMax judges coaching output against a hand-crafted, manually reviewed dataset and compares prompt formats.
-- **Monitoring:** a React dashboard displays JSONL metrics; thumbs feedback can be exported as evaluation candidates.
+- **Testing:** unit/API tests verify registered tool execution and structured output; judge tests run without network credentials.
+- **Evaluation:** deterministic detectors run against 11 varied fixtures; MiniMax judge evaluation compares prompt formats.
+- **Monitoring:** Logfire traces PydanticAI runs while the React dashboard displays local usage and feedback metrics.
 - **Reproducibility:** sample PGN data is included; setup commands are below.
 - **Bonus:** React UI, Docker, docker-compose, Makefile, uv dependency workflow, and GitHub Actions CI are included.
 
@@ -118,8 +119,14 @@ export OPENROUTER_API_KEY=...
 export OPENROUTER_MODEL=minimax/minimax-m3
 ```
 
-The model is used for follow-up coaching and optional LLM-judge evaluation. Chess-critical logic
-remains grounded in PGN parsing, legal move generation, optional Stockfish, and retrieved principles.
+The model is used for structured follow-up coaching and optional LLM-judge evaluation. The agent
+registers `search_chess_principles`, `inspect_critical_moments`, `inspect_position`, and
+`build_training_drill` as real PydanticAI tools. Chess-critical logic remains grounded in PGN
+parsing, legal move generation, optional Stockfish, and retrieved principles.
+
+MiniMax M3 cost estimates use the current OpenRouter rates configured in the app. Override them for
+a different model with `OPENROUTER_INPUT_COST_PER_MILLION` and
+`OPENROUTER_OUTPUT_COST_PER_MILLION`.
 
 ## Stockfish
 
@@ -155,8 +162,10 @@ so CI stays deterministic. Measured results and the resulting prompt change are 
 
 ## Monitoring and Feedback
 
-The dashboard at the bottom of the React app reads `GET /api/monitoring`. Helpful/not-helpful
-buttons on each critical moment write feedback events. Export those events for review with:
+The `/quality` dashboard reads `GET /api/monitoring` and displays agent latency, tokens, estimated
+cost, tool usage, analyses, and feedback. Set `LOGFIRE_TOKEN` to send the same PydanticAI agent runs
+to Logfire as grouped `coach_session` traces. Without a token, local JSONL monitoring remains active.
+Helpful/not-helpful buttons on each critical moment write feedback events. Export those events with:
 
 ```bash
 cd backend

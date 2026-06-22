@@ -44,14 +44,27 @@ def monitoring_summary() -> dict[str, Any]:
     events = read_events()
     event_counts = Counter(event.get("event_type", "unknown") for event in events)
     feedback = [event for event in events if event.get("event_type") == "moment_feedback"]
+    chats = [event for event in events if event.get("event_type") == "chat_completed"]
+    llm_chats = [event for event in chats if event.get("used_llm")]
     helpful = sum(event.get("rating") == "helpful" for event in feedback)
     themes = Counter(event.get("theme") for event in feedback if event.get("theme"))
+    tool_usage = Counter(tool for event in chats for tool in event.get("tools_used", []))
+    input_tokens = sum((event.get("usage") or {}).get("input_tokens", 0) for event in chats)
+    output_tokens = sum((event.get("usage") or {}).get("output_tokens", 0) for event in chats)
+    estimated_cost = sum((event.get("usage") or {}).get("estimated_cost_usd", 0) for event in chats)
+    chat_latency = [event.get("duration_ms", 0) for event in chats if event.get("duration_ms") is not None]
     return {
         "total_events": len(events),
         "event_counts": dict(event_counts),
         "feedback_count": len(feedback),
         "helpful_rate": round(helpful / len(feedback), 3) if feedback else None,
         "feedback_themes": dict(themes),
+        "llm_calls": len(llm_chats),
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "estimated_cost_usd": round(estimated_cost, 8),
+        "average_chat_latency_ms": round(sum(chat_latency) / len(chat_latency), 2) if chat_latency else None,
+        "tool_usage": dict(tool_usage),
         "recent_events": list(reversed(events[-8:])),
     }
 

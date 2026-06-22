@@ -3,11 +3,11 @@
 | Buildcamp topic | Project artifact |
 | --- | --- |
 | RAG and search | BM25 retrieval, baseline comparison, eight-query hand-crafted benchmark |
-| Structured output | `backend/src/chess_coach_agent/models.py` Pydantic models |
-| Agents and tools | `ChessCoachAgent` orchestrates import, analysis, retrieval, trends, and LLM chat |
+| Structured output | PydanticAI validates `CoachingOutput` evidence, principle, drill, move, and confidence fields |
+| Agents and tools | PydanticAI registers four tools and records real tool execution history |
 | Project structure | Python package under `backend/src`, React app under `frontend/src` |
 | Testing agents | Unit/API tests and `test_judge.py` for the LLM-judge pipeline |
-| Monitoring | JSONL events, `/api/monitoring`, React dashboard, and moment feedback |
+| Monitoring | Logfire agent traces plus JSONL usage/cost events, React dashboard, and moment feedback |
 | Offline evaluation | Deterministic labels, MiniMax judge, prompt comparison, and manual review |
 | Project scorer | `scripts/score_project.py` self-checks the capstone rubric |
 
@@ -20,10 +20,10 @@
 - `EngineAnalyzer.analyse`: use Stockfish when present; fall back to legal-move heuristics.
 - `answer_question`: call OpenRouter for coach chat with retrieved context.
 
-For coach chat, MiniMax first returns a JSON tool plan choosing at least two of
-`retrieve_principles`, `inspect_critical_moments`, and `build_training_drill`. The application executes
-those tools and sends their observations back to MiniMax for the final answer. Invalid plans fall
-back to retrieval plus position inspection so the workflow remains reliable.
+For coach chat, MiniMax uses PydanticAI's native tool loop to call at least two of
+`search_chess_principles`, `inspect_critical_moments`, `inspect_position`, and
+`build_training_drill`. PydanticAI validates the final structured output. Missing credentials or
+provider errors fall back to deterministic structured coaching so the workflow remains reliable.
 
 ## Tuning Evidence
 

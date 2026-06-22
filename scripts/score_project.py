@@ -61,12 +61,23 @@ def score_knowledge() -> Score:
 
 
 def score_agents() -> Score:
-    agent = read("backend/src/chess_coach_agent/agent.py")
     llm = read("backend/src/chess_coach_agent/llm.py")
-    tool_count = sum(agent.count(term) for term in ["import_pgn_text", "import_platform_games", "retrieve_chess_principles", "generate_trend_summary"])
-    llm_tools = all(term in llm for term in ["retrieve_principles", "inspect_critical_moments", "build_training_drill"])
-    ok = "OPENROUTER_API_KEY" in llm and tool_count >= 4 and llm_tools
-    return Score("Agents and LLM", 3 if ok else 2 if tool_count >= 2 else 0, 3, "MiniMax plans multiple documented coach tools before answer synthesis.")
+    tools = [
+        "search_chess_principles",
+        "inspect_critical_moments",
+        "inspect_position",
+        "build_training_drill",
+    ]
+    registered_tools = all(term in llm for term in tools)
+    pydantic_agent = "from pydantic_ai import Agent" in llm and "output_type=CoachingOutput" in llm
+    has_llm = "OPENROUTER_API_KEY" in llm
+    points = 3 if has_llm and registered_tools and pydantic_agent else 2 if has_llm else 0
+    return Score(
+        "Agents and LLM",
+        points,
+        3,
+        "PydanticAI lets MiniMax call four documented tools before structured answer synthesis.",
+    )
 
 
 def score_code_org() -> Score:
@@ -96,8 +107,9 @@ def score_eval_bonus() -> Score:
 def score_monitoring() -> Score:
     logs = exists("backend/src/chess_coach_agent/monitoring.py")
     dashboard = exists("frontend/src/components/MonitoringDashboard.tsx") and contains("backend/src/chess_coach_agent/api.py", "/api/monitoring")
-    docs = contains("docs/monitoring.md", "jsonl", "dashboard")
-    return Score("Monitoring", 2 if logs and dashboard and docs else 1 if logs else 0, 2, "JSONL events are displayed in the React monitoring dashboard.")
+    docs = contains("docs/monitoring.md", "logfire", "jsonl", "dashboard")
+    tracing = contains("backend/src/chess_coach_agent/llm.py", "instrument_pydantic_ai", "coach_session")
+    return Score("Monitoring", 2 if logs and dashboard and docs and tracing else 1 if logs else 0, 2, "Logfire traces and local usage events feed the React quality dashboard.")
 
 
 def score_monitoring_bonus() -> Score:
@@ -134,7 +146,9 @@ def score_best_practices() -> Score:
 
 def score_additional_bonus() -> Score:
     points = 1 if any_file("frontend/src/**/*.tsx") else 0
-    return Score("Additional Bonus Points", points, 3, "React UI is present; cloud deployment is optional.")
+    deployed = contains("README.md", "https://chess-coach-agent.onrender.com/analyze")
+    points += 2 if deployed else 0
+    return Score("Additional Bonus Points", points, 3, "React UI and a public Render deployment are documented.")
 
 
 SCORERS: list[Callable[[], Score]] = [

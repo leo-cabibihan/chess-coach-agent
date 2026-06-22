@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { analyzeGames, askCoach, getSample, previewPlayerGames, sendMomentFeedback } from '../lib/api';
-import type { CoachAnalysis, CriticalMoment, GamePreview, Platform } from '../lib/types';
+import type { ChatResponse, CoachAnalysis, CriticalMoment, GamePreview, Platform } from '../lib/types';
 
 const STORAGE_KEY = 'chess-coach-workspace';
 
@@ -30,6 +30,7 @@ type WorkspaceContextValue = {
   status: string;
   error: string;
   coachAnswer: string;
+  coachResponse: ChatResponse | null;
   feedbackStatus: string;
   monitoringRefresh: number;
   openGame: (gameId: string) => void;
@@ -68,6 +69,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState(stored?.analyses.length ? `${stored.analyses.length} games ready` : 'Ready');
   const [error, setError] = useState('');
   const [coachAnswer, setCoachAnswer] = useState('');
+  const [coachResponse, setCoachResponse] = useState<ChatResponse | null>(null);
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [monitoringRefresh, setMonitoringRefresh] = useState(0);
 
@@ -90,6 +92,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   function openGame(gameId: string) {
     setActiveGameId(gameId);
     setCoachAnswer('');
+    setCoachResponse(null);
     setFeedbackStatus('');
   }
 
@@ -180,7 +183,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setError('');
     setStatus('Asking MiniMax coach...');
     try {
-      setCoachAnswer(await askCoach(question, activeAnalysis));
+      const response = await askCoach(question, activeAnalysis);
+      setCoachResponse(response);
+      setCoachAnswer(response.answer);
       setStatus('Coach answer ready');
       setMonitoringRefresh((value) => value + 1);
     } catch (caught) {
@@ -206,6 +211,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     <WorkspaceContext.Provider value={{
       pgn, setPgn, player, setPlayer, platform, setPlatform, availableGames, selectedGameIds,
       analyses, activeGameId, activeAnalysis, loading, status, error, coachAnswer,
+      coachResponse,
       feedbackStatus, monitoringRefresh, openGame, runAnalysis, findGames,
       toggleGameSelection, selectAllGames, clearGameSelection: () => setSelectedGameIds([]),
       analyzeSelectedGames, ask,
