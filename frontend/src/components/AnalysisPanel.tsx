@@ -51,10 +51,9 @@ export function AnalysisPanel({
           <div className="card critical-card">
             <div className="card-heading">
               <span><CircleDot size={17} /> Critical Moment Analysis</span>
+              <span className={`judgment-badge ${selectedMoment.judgment}`}>{selectedMoment.judgment}</span>
               <span className="badge">{selectedMoment.phase}</span>
-              {selectedMoment.eval_swing !== null && (
-                <span className="score-badge">{selectedMoment.eval_swing.toFixed(2)}</span>
-              )}
+              <span className="score-badge">-{selectedMoment.win_probability_loss.toFixed(1)}% win chance</span>
             </div>
             <div className="move-comparison">
               <div className="move-box bad">
@@ -68,6 +67,7 @@ export function AnalysisPanel({
                 <small>What the coach suggests checking</small>
               </div>
             </div>
+            <p className="moment-metric">Move accuracy {selectedMoment.move_accuracy.toFixed(1)}% · {selectedMoment.trainable ? 'Selected for training' : 'Review only'}</p>
             <div className="moment-feedback">
               <span>{feedbackStatus || 'Was this coaching useful?'}</span>
               <button

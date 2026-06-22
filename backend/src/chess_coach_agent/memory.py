@@ -3,18 +3,27 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .db_models import CoachSessionRow, MessageRow, PlayerMemoryRow, SessionSummaryRow
+from .db_models import (
+    CoachSessionRow,
+    CriticalMomentRow,
+    GameRow,
+    MessageRow,
+    PlayerMemoryRow,
+    SessionSummaryRow,
+)
 from .embeddings import cosine_similarity, embed_text
 from .monitoring import log_event
 
 
 def latest_message_history(session: Session, coach_session_id: str) -> list[dict]:
-    latest = session.scalar(
+    recent = session.scalars(
         select(MessageRow)
         .where(MessageRow.session_id == coach_session_id, MessageRow.role == "assistant")
         .order_by(MessageRow.sequence.desc())
-    )
-    return latest.message_history[-12:] if latest and latest.message_history else []
+        .limit(6)
+    ).all()
+    latest = next((item for item in recent if item.message_history), None)
+    return latest.message_history[-12:] if latest else []
 
 
 def memory_context(session: Session, coach_session: CoachSessionRow, query: str) -> str:
@@ -58,6 +67,61 @@ def memory_context(session: Session, coach_session: CoachSessionRow, query: str)
     if relevant:
         lines.append("Relevant earlier coaching memories: " + " | ".join(relevant))
     return "\n".join(lines)
+
+
+def game_evidence_context(
+    session: Session, coach_session: CoachSessionRow, query: str, limit: int = 5
+) -> tuple[str, int]:
+    theme_terms = {
+        "loose_piece": ("loose", "hanging", "undefended", "piece"),
+        "missed_tactic": ("tactic", "forcing", "check", "capture", "fork", "pin"),
+        "king_safety": ("king", "castle", "mate", "back rank"),
+        "opening_drift": ("opening", "develop", "queen", "tempo"),
+        "endgame_conversion": ("endgame", "convert", "pawn", "simplif"),
+    }
+    lowered = query.lower()
+    requested = {
+        theme
+        for theme, terms in theme_terms.items()
+        if any(term in lowered for term in terms)
+    }
+    rows = session.execute(
+        select(CriticalMomentRow, GameRow)
+        .join(GameRow, CriticalMomentRow.game_id == GameRow.id)
+        .where(GameRow.player_id == coach_session.player_id)
+    ).all()
+    ranked = sorted(
+        rows,
+        key=lambda pair: (
+            pair[0].theme in requested,
+            pair[1].player_result == "loss",
+            pair[0].severity,
+            pair[1].played_at,
+        ),
+        reverse=True,
+    )[:limit]
+    log_event(
+        "game_evidence_retrieved",
+        {
+            "player_id": coach_session.player_id,
+            "session_id": coach_session.id,
+            "candidate_count": len(rows),
+            "retrieved_count": len(ranked),
+            "themes": sorted(requested),
+        },
+    )
+    if not ranked:
+        return "No analyzed game positions are stored for this player yet.", 0
+    lines = ["Relevant analyzed game positions:"]
+    for moment, game in ranked:
+        opponent = game.black if game.player_color == "white" else game.white
+        lines.append(
+            f"- Game {game.external_game_id} vs {opponent} ({game.player_result}, {game.played_at}), "
+            f"move {moment.move_number}: played {moment.played_san}, engine candidate "
+            f"{moment.best_san or 'unavailable'}, theme {moment.theme}, severity "
+            f"{moment.severity:.2f}, FEN {moment.fen_before}"
+        )
+    return "\n".join(lines), len(ranked)
 
 
 def summarize_if_needed(session: Session, coach_session_id: str) -> SessionSummaryRow | None:

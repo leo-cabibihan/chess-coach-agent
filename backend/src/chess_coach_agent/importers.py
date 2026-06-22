@@ -14,7 +14,7 @@ async def fetch_chesscom_pgn(username: str, max_games: int = 20) -> str:
     async with httpx.AsyncClient(timeout=30, headers=headers) as client:
         archives = await client.get(f"https://api.chess.com/pub/player/{username}/games/archives")
         archives.raise_for_status()
-        urls = archives.json().get("archives", [])[-6:]
+        urls = archives.json().get("archives", [])
         chunks: list[str] = []
         for url in reversed(urls):
             pgn_url = url + "/pgn"

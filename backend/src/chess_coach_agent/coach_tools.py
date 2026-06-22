@@ -9,9 +9,9 @@ from sqlalchemy import select
 from .db import session_scope
 from .db_models import CriticalMomentRow, GameRow, PlayerRow
 from .engine import EngineAnalyzer
-from .repositories import player_profile, training_session_view
+from .repositories import player_profile
 from .training import build_training_session as create_training_plan
-from .training import evaluate_attempt, generate_flashcards as create_flashcards, quiz_panel
+from .training import evaluate_attempt, quiz_panel
 
 def inspect_game(ctx: RunContext[Any], game_id: str) -> dict[str, Any]:
     """Inspect one persisted game and its critical moments by external game ID."""
@@ -95,20 +95,6 @@ def generate_position_quiz(
         return panel.model_dump(mode="json")
 
 
-def generate_flashcards(
-    ctx: RunContext[Any], game_ids: list[str] | None = None, theme: str = ""
-) -> dict[str, Any]:
-    """Create personal chess flashcards from stored critical moments."""
-    del game_ids
-    ctx.deps.record("generate_flashcards")
-    if not ctx.deps.player_id:
-        return {"error": "No persistent player profile is attached"}
-    with session_scope() as session:
-        panel = create_flashcards(session, ctx.deps.player_id, theme or None)
-        ctx.deps.panel = panel
-        return panel.model_dump(mode="json")
-
-
 def evaluate_candidate_move(
     ctx: RunContext[Any], position_id: str, move: str
 ) -> dict[str, Any]:
@@ -123,26 +109,17 @@ def evaluate_candidate_move(
 def build_training_session(
     ctx: RunContext[Any], player_profile_hint: str = ""
 ) -> dict[str, Any]:
-    """Build an adaptive training plan from the player's weakness and quiz history."""
+    """Open the next adaptive quiz from the player's weakness and quiz history."""
     del player_profile_hint
     ctx.deps.record("build_training_session")
     if not ctx.deps.platform or not ctx.deps.username:
         return {"error": "No persistent player profile is attached"}
     with session_scope() as session:
         plan = create_training_plan(session, ctx.deps.platform, ctx.deps.username)
-        view = training_session_view(session, plan.id)
         player = session.get(PlayerRow, plan.player_id)
-        if view is None or player is None:
-            return {"error": "Training plan could not be created"}
-        from .models import PlanPanel
-
-        panel = PlanPanel(
-            training_session_id=plan.id,
-            focus_themes=plan.focus_themes,
-            difficulty=plan.difficulty,  # type: ignore[arg-type]
-            position_count=len(view.positions),
-            estimated_minutes=max(3, len(view.positions) * 2),
-        )
+        panel = quiz_panel(session, plan.id)
+        if panel is None or player is None:
+            return {"error": "Analyze games with engine candidates before starting training"}
         ctx.deps.panel = panel
         return {
             "panel": panel.model_dump(mode="json"),

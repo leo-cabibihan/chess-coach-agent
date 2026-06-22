@@ -11,5 +11,8 @@ scored coaching explanations.
 | `loose_piece_fixture` | Identify the exposed queen and teach an attacks/defenders scan | Pass; correct theme and practical loose-piece drill. The exact rook attacker could be stated more explicitly. |
 | `opening_drift_fixture` | Connect three queen moves with lost development and delayed king safety | Pass; the revised answer names the cumulative queen detour, development tempi, castling, and a tailored replay drill. |
 
+The nine additional deterministic regression fixtures in `critical_moments.jsonl` are validated by
+`test_analysis.py` and `evaluation.py`; they are not part of this two-case manual coaching review.
+
 Manual verdict: **2/2 acceptable**, with one documented improvement opportunity. The LLM judge is a
 second opinion, not a replacement for this review.

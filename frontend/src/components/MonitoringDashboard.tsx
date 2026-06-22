@@ -30,7 +30,7 @@ export function MonitoringDashboard({ refreshKey }: { refreshKey: number }) {
         </button>
       </div>
       {!summary ? (
-        <p className="monitoring-empty">Monitoring data will appear after an analysis or coach question.</p>
+        <p className="monitoring-empty">Monitoring data will appear after an analysis or practice attempt.</p>
       ) : (
         <>
           <div className="monitoring-metrics">

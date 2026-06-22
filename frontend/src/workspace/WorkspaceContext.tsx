@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { analyzeGames, askCoach, getSample, previewPlayerGames, sendMomentFeedback } from '../lib/api';
-import type { ChatResponse, CoachAnalysis, CriticalMoment, GamePreview, Platform } from '../lib/types';
+import {
+  analyzeGames,
+  getAnalyzedGames,
+  getGameSync,
+  getSample,
+  sendMomentFeedback,
+  startGameSync
+} from '../lib/api';
+import type { CoachAnalysis, CriticalMoment, Platform } from '../lib/types';
 
 const STORAGE_KEY = 'chess-coach-workspace';
 
@@ -10,8 +17,6 @@ type StoredWorkspace = {
   player: string;
   pgn: string;
   platform?: Platform;
-  availableGames?: GamePreview[];
-  selectedGameIds?: string[];
 };
 
 type WorkspaceContextValue = {
@@ -21,26 +26,16 @@ type WorkspaceContextValue = {
   setPlayer: (value: string) => void;
   platform: Platform;
   setPlatform: (value: Platform) => void;
-  availableGames: GamePreview[];
-  selectedGameIds: string[];
   analyses: CoachAnalysis[];
   activeGameId: string;
-  activeAnalysis: CoachAnalysis | null;
   loading: boolean;
   status: string;
   error: string;
-  coachAnswer: string;
-  coachResponse: ChatResponse | null;
   feedbackStatus: string;
   monitoringRefresh: number;
   openGame: (gameId: string) => void;
   runAnalysis: () => Promise<CoachAnalysis | null>;
-  findGames: () => Promise<void>;
-  toggleGameSelection: (gameId: string) => void;
-  selectAllGames: () => void;
-  clearGameSelection: () => void;
-  analyzeSelectedGames: () => Promise<CoachAnalysis | null>;
-  ask: (question: string) => Promise<void>;
+  syncAllGames: () => Promise<CoachAnalysis | null>;
   recordFeedback: (moment: CriticalMoment, rating: 'helpful' | 'not_helpful') => Promise<void>;
   clearFeedbackStatus: () => void;
   restoreAnalyses: (items: CoachAnalysis[]) => void;
@@ -62,15 +57,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [pgn, setPgn] = useState(stored?.pgn || '');
   const [player, setPlayer] = useState(stored?.player || 'kfctofu');
   const [platform, setPlatform] = useState<Platform>(stored?.platform || 'chess.com');
-  const [availableGames, setAvailableGames] = useState<GamePreview[]>(stored?.availableGames || []);
-  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(stored?.selectedGameIds || []);
   const [analyses, setAnalyses] = useState<CoachAnalysis[]>(stored?.analyses || []);
   const [activeGameId, setActiveGameId] = useState(stored?.activeGameId || stored?.analyses[0]?.game.game_id || '');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(stored?.analyses.length ? `${stored.analyses.length} games ready` : 'Ready');
   const [error, setError] = useState('');
-  const [coachAnswer, setCoachAnswer] = useState('');
-  const [coachResponse, setCoachResponse] = useState<ChatResponse | null>(null);
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [monitoringRefresh, setMonitoringRefresh] = useState(0);
 
@@ -83,17 +74,17 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   }, [pgn]);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-      analyses, activeGameId, player, pgn, platform, availableGames, selectedGameIds
-    }));
-  }, [activeGameId, analyses, availableGames, pgn, platform, player, selectedGameIds]);
-
-  const activeAnalysis = analyses.find((item) => item.game.game_id === activeGameId) || analyses[0] || null;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        analyses: analyses.slice(0, 25), activeGameId, player, pgn, platform
+      }));
+    } catch {
+      // Server persistence remains authoritative when browser storage is full or unavailable.
+    }
+  }, [activeGameId, analyses, pgn, platform, player]);
 
   function openGame(gameId: string) {
     setActiveGameId(gameId);
-    setCoachAnswer('');
-    setCoachResponse(null);
     setFeedbackStatus('');
   }
 
@@ -119,79 +110,37 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function findGames() {
-    if (!player.trim()) return;
+  async function syncAllGames() {
+    if (!player.trim()) return null;
     setLoading(true);
     setError('');
-    setStatus(`Finding ${platform} games for ${player}...`);
+    setStatus(`Starting ${platform} history sync for ${player}...`);
     try {
-      const result = await previewPlayerGames(player, platform, 50);
-      setAvailableGames(result.games);
-      setSelectedGameIds(result.games.slice(0, 3).map((game) => game.game_id));
-      setStatus(`Found ${result.games.length} games. Select up to 10 to analyze.`);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : `Could not find games on ${platform}`);
-      setStatus('Game search failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function toggleGameSelection(gameId: string) {
-    setSelectedGameIds((current) => {
-      if (current.includes(gameId)) return current.filter((id) => id !== gameId);
-      if (current.length >= 10) {
-        setError('Select up to 10 games per analysis batch.');
-        return current;
+      let job = await startGameSync(player, platform);
+      while (!['complete', 'failed'].includes(job.status)) {
+        const completed = job.analyzed_games + job.skipped_games;
+        setStatus(
+          job.status === 'fetching'
+            ? `Fetching complete ${platform} history...`
+            : `Analyzing game ${Math.min(completed + 1, job.total_games)} of ${job.total_games}...`
+        );
+        await new Promise((resolve) => window.setTimeout(resolve, 1000));
+        job = await getGameSync(job.id);
       }
-      setError('');
-      return [...current, gameId];
-    });
-  }
-
-  function selectAllGames() {
-    setError('');
-    setSelectedGameIds(availableGames.slice(0, 10).map((game) => game.game_id));
-  }
-
-  async function analyzeSelectedGames() {
-    const selected = availableGames.filter((game) => selectedGameIds.includes(game.game_id));
-    if (!selected.length) return null;
-    setLoading(true);
-    setError('');
-    setStatus(`Analyzing ${selected.length} selected games...`);
-    try {
-      const result = await analyzeGames(selected.map((game) => game.pgn).join('\n\n'), player, selected.length, platform);
+      if (job.status === 'failed') throw new Error(job.error || 'Game sync failed');
+      const result = await getAnalyzedGames(player, platform);
       setAnalyses(result.analyses);
       const first = result.analyses[0] || null;
       if (first) openGame(first.game.game_id);
-      const moments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
-      setStatus(`Analyzed ${result.analyses.length} selected games with ${moments} moments`);
+      setStatus(
+        `Synced ${job.total_games} games · analyzed ${job.analyzed_games} new · skipped ${job.skipped_games} existing`
+      );
       setMonitoringRefresh((value) => value + 1);
       return first;
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Selected game analysis failed');
-      setStatus('Could not analyze selected games');
+      setError(caught instanceof Error ? caught.message : `Could not sync games from ${platform}`);
+      setStatus('Game sync failed');
       return null;
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function ask(question: string) {
-    if (!question.trim()) return;
-    setLoading(true);
-    setError('');
-    setStatus('Asking MiniMax coach...');
-    try {
-      const response = await askCoach(question, activeAnalysis);
-      setCoachResponse(response);
-      setCoachAnswer(response.answer);
-      setStatus('Coach answer ready');
-      setMonitoringRefresh((value) => value + 1);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Coach chat failed');
-      setStatus('Coach chat failed');
     } finally {
       setLoading(false);
     }
@@ -210,15 +159,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={{
-      pgn, setPgn, player, setPlayer, platform, setPlatform, availableGames, selectedGameIds,
-      analyses, activeGameId, activeAnalysis, loading, status, error, coachAnswer,
-      coachResponse,
-      feedbackStatus, monitoringRefresh, openGame, runAnalysis, findGames,
-      toggleGameSelection, selectAllGames, clearGameSelection: () => setSelectedGameIds([]),
-      analyzeSelectedGames, ask,
+      pgn, setPgn, player, setPlayer, platform, setPlatform,
+      analyses, activeGameId, loading, status, error,
+      feedbackStatus, monitoringRefresh, openGame, runAnalysis, syncAllGames,
       recordFeedback, clearFeedbackStatus: () => setFeedbackStatus('')
       , restoreAnalyses: (items) => {
         setAnalyses(items);
+        setStatus(`${items.length} games ready`);
         if (items.length && !activeGameId) setActiveGameId(items[0].game.game_id);
       }
     }}>

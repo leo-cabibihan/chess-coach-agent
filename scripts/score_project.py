@@ -74,7 +74,6 @@ def score_agents() -> Score:
         "inspect_game",
         "compare_moves",
         "generate_position_quiz",
-        "generate_flashcards",
         "evaluate_candidate_move",
         "build_training_session",
     ]
@@ -86,7 +85,7 @@ def score_agents() -> Score:
         "Agents and LLM",
         points,
         3,
-        "PydanticAI lets MiniMax call ten documented tools before structured answer synthesis.",
+        "PydanticAI lets MiniMax call nine documented tools before structured answer synthesis.",
     )
 
 
@@ -118,7 +117,9 @@ def score_monitoring() -> Score:
     logs = exists("backend/src/chess_coach_agent/monitoring.py")
     dashboard = exists("frontend/src/components/MonitoringDashboard.tsx") and contains("backend/src/chess_coach_agent/api.py", "/api/monitoring")
     docs = contains("docs/monitoring.md", "logfire", "jsonl", "dashboard")
-    tracing = contains("backend/src/chess_coach_agent/llm.py", "instrument_pydantic_ai", "coach_session")
+    tracing = contains(
+        "backend/src/chess_coach_agent/llm.py", "instrument_pydantic_ai", "service_name"
+    )
     return Score("Monitoring", 2 if logs and dashboard and docs and tracing else 1 if logs else 0, 2, "Logfire traces and local usage events feed the React quality dashboard.")
 
 
@@ -156,7 +157,7 @@ def score_best_practices() -> Score:
 
 def score_additional_bonus() -> Score:
     points = 1 if any_file("frontend/src/**/*.tsx") else 0
-    deployed = contains("README.md", "https://chess-coach-agent.onrender.com/analyze")
+    deployed = contains("README.md", "https://chess-coach-agent.onrender.com/")
     points += 2 if deployed else 0
     return Score("Additional Bonus Points", points, 3, "React UI and a public Render deployment are documented.")
 

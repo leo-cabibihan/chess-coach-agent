@@ -2,13 +2,13 @@
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/leo-cabibihan/chess-coach-agent)
 
-**Live app:** <https://chess-coach-agent.onrender.com/analyze>
+**Live app:** <https://chess-coach-agent.onrender.com/>
 
 Chess Coach Agent is an adaptive AI Engineering Buildcamp capstone. It turns a player's Chess.com,
 Lichess, or uploaded PGN games into a durable learning loop:
 
 ```text
-Import games -> Detect weaknesses -> Coach -> Practice -> Evaluate -> Adapt
+Import games -> Detect weaknesses -> Practice -> Evaluate -> Adapt
 ```
 
 The product is inspired by modern chess-coach UIs: the left side explains the AI analysis and the
@@ -21,27 +21,29 @@ Club players collect hundreds of online games but rarely convert them into a foc
 Engine analysis can say a move is worse, but it often does not explain the human pattern: loose
 pieces, missed forcing moves, king-safety neglect, opening drift, or poor endgame conversion.
 
-This project solves that by combining game import, engine-backed analysis, chess-principle retrieval,
-OpenRouter commentary, deterministic fallback explanations, and daily challenge prompts.
+This project solves that by combining full-history game sync, engine-backed analysis,
+deterministic theme explanations, direct board drills, and spaced repetition. Retrieval and
+PydanticAI remain available for offline evaluation, not the live practice loop.
 
 ## What It Does
 
 - Upload or paste PGN.
-- Browse up to 50 Chess.com or Lichess games before choosing which ones to analyze.
+- Sync a player's Chess.com or Lichess history in one action; already analyzed games are skipped.
 - Parse games into structured moves and metadata.
-- Find up to four critical moments per game.
+- Find a variable number of critical moments using Lichess-style winning-chance-loss thresholds.
 - Compare the move played against the engine or fallback best candidate.
-- Explain what happened, the better plan, the chess principle, and a drill.
-- Persist games, player memory, coaching sessions, quizzes, flashcards, and review schedules in
+- Generate deterministic explanations (what happened, better plan, principle, drill) from verified
+  engine losses, theme detectors, and BM25 lesson snippets.
+- Persist games, player memory, quizzes, and review schedules in
   Postgres (SQLite is the credential-free local fallback).
-- Stream persistent coaching turns and typed board, quiz, flashcard, evaluation, and plan panels.
+- Build direct practice sessions from the player's highest-value mistakes and blunders.
 - Grade legal SAN/UCI candidate moves with Stockfish, then adapt difficulty by theme.
 - Resurface failed positions after 1 day, hinted successes after 3, and clean successes after 7,
   doubling successful review intervals up to 30 days.
-- Retrieve curated lessons and same-player coaching memories without embedding raw PGNs or FENs.
-- Let MiniMax call ten PydanticAI tools while Stockfish remains authoritative for chess decisions.
+- Attach curated lesson snippets to each analysis through BM25 retrieval; recompute player weakness memory from imports, moments, and quiz attempts without embedding raw PGNs or FENs.
+- Let MiniMax call nine PydanticAI tools while Stockfish remains authoritative for chess decisions.
 - Validate every coaching answer as structured Pydantic output with evidence and confidence.
-- Trace agent runs with Logfire and display token, cost, latency, tool, and feedback metrics.
+- Trace offline agent and judge runs with Logfire and display quality and feedback metrics.
 - Show the analysis in a React frontend with a board and move history.
 
 ## Routed Frontend
@@ -49,14 +51,15 @@ OpenRouter commentary, deterministic fallback explanations, and daily challenge 
 The React app uses TanStack Router with intent preloading and scroll restoration:
 
 - `/` is the player dashboard: rating, weaknesses, due positions, progress, and continue training.
-- `/analyze` remains backward compatible and separates online import from pasted PGN. Online import first loads a metadata-only game
-  picker; the user can filter by result and select up to ten games before running Stockfish.
-- `/games` is the analyzed-game library.
+- `/games` combines automatic full-history sync with the analyzed-game evidence library. Sync runs
+  as a durable job, reports progress, and analyzes only games that are not already stored.
+- `/analyze` remains as a compatibility redirect to the Games import panel.
 - `/games/:gameId?moment=:momentId` makes game and critical-moment selection URL-addressable.
-- `/coach/:sessionId` is a two-panel workspace with streamed conversation/tool activity and a
-  contextual board, quiz, flashcard, evaluation, or plan.
+- `/practice/:sessionId` is a focused board drill with Stockfish grading and review scheduling.
+- Retired `/coach` URLs redirect to `/practice`; there is no user-facing chatbot.
 - `/progress` charts rating, results, themes, quiz accuracy, mastery, and transfer to games.
-- `/quality` displays model, stream, retrieval, memory, quiz, hint, and feedback metrics.
+- `/quality` is a hidden reviewer/admin route for evaluation, retrieval, quiz, hint, and feedback
+  metrics.
 
 TanStack Query owns server state. Browser session storage is retained only as an offline cache for
 the current import and viewed analyses. See `docs/architecture.md` for the data flow and memory model.
@@ -67,13 +70,13 @@ the current import and viewed analyses. See `docs/architecture.md` for the data 
 - **Knowledge base and retrieval:** 20 hand-authored queries compare title, BM25, vector, and hybrid
   RRF retrieval on hit rate, MRR, source correctness, and latency. The benchmark keeps BM25 as the
   production default until hybrid clears every quality and latency gate.
-- **Agents and LLM:** a PydanticAI agent calls ten documented chess tools through OpenRouter/MiniMax.
+- **Agents and LLM:** a PydanticAI agent calls nine documented chess tools through OpenRouter/MiniMax.
 - **Code organization:** backend is a Python package under `backend/src`; frontend is a Vite React app.
-- **Testing:** unit/API tests cover registered tool order, legal move grading, adaptive difficulty,
-  durable coach/training flows, and SSE reconnect; judge tests run without network credentials.
+- **Testing:** 12 test modules / 18 pytest cases cover registered tool order, legal move grading, adaptive difficulty,
+  durable training flows and move grading; judge tests run without network credentials.
 - **Evaluation:** deterministic detectors run against 11 varied fixtures; MiniMax judge evaluation compares prompt formats.
-- **Monitoring:** Logfire groups PydanticAI work under `coach_session` spans while the Quality page
-  displays local usage, tool, stream, memory, retrieval, practice, hint, and feedback metrics.
+- **Monitoring:** Logfire traces offline PydanticAI evaluation while the Quality page displays
+  local analysis, retrieval, practice, hint, and feedback metrics.
 - **Reproducibility:** sample PGN data is included; setup commands are below.
 - **Bonus:** React UI, Docker, docker-compose, Makefile, uv dependency workflow, and GitHub Actions CI are included.
 
@@ -124,7 +127,7 @@ and managed Postgres database with `/api/health` checks.
 2. Rotate the OpenRouter key if it has ever been shared, then keep the replacement out of Git.
 3. In Render, create a **Blueprint** from the repository. Render reads `render.yaml` and prompts for
    `OPENROUTER_API_KEY` because it is declared with `sync: false`.
-4. Deploy and verify `/api/health`, `/`, game import, `/coach`, a quiz attempt, `/progress`, and
+4. Deploy and verify `/api/health`, `/`, game import, `/practice`, a quiz attempt, `/progress`, and
    `/quality`.
 
 The free configuration stores monitoring JSONL under `/tmp`, so metrics reset when the service
@@ -133,18 +136,30 @@ restarts or redeploys. For persistent monitoring, attach a paid disk at `/var/da
 
 ## OpenRouter
 
-The app works without a model key by using deterministic coach text. To enable LLM commentary:
+The user-facing product works without a model key. OpenRouter is retained for the capstone's
+documented PydanticAI tool-routing and LLM-judge evaluation workflows:
 
 ```bash
 export OPENROUTER_API_KEY=...
 export OPENROUTER_MODEL=minimax/minimax-m3
 ```
 
-The model is used for structured teaching and optional LLM-judge evaluation. The ten real tools are
+The model is used in reproducible tool-routing tests and optional LLM-judge evaluation. The nine
+real tools are
 `search_chess_principles`, `inspect_critical_moments`, `inspect_position`, `build_training_drill`,
-`inspect_game`, `compare_moves`, `generate_position_quiz`, `generate_flashcards`,
-`evaluate_candidate_move`, and `build_training_session`. Chess-critical logic remains grounded in
+`inspect_game`, `compare_moves`, `generate_position_quiz`, `evaluate_candidate_move`, and
+`build_training_session`. Chess-critical logic remains grounded in
 PGN parsing, legal move generation, Stockfish, stored player evidence, and cited lessons.
+
+The interactive chatbot was intentionally removed because it added latency without improving the
+core learning loop. Exact game IDs, FENs, moves, and engine scores remain relational; BM25/vector
+retrieval and PydanticAI remain available for reproducible agent evaluation rather than blocking
+ordinary game review or practice.
+
+Critical moments are not quota-filled. Stockfish evaluations are converted to winning chances, then
+losses of 0.10, 0.20, and 0.30 are labeled inaccuracy, mistake, and blunder. Mistakes and blunders
+are preferred for drills; thematic heuristics explain an already verified engine loss rather than
+inventing training moments. See [`docs/moment_selection.md`](docs/moment_selection.md).
 
 MiniMax M3 cost estimates use the current OpenRouter rates configured in the app. Override them for
 a different model with `OPENROUTER_INPUT_COST_PER_MILLION` and
@@ -184,9 +199,9 @@ so CI stays deterministic. Measured results and the resulting prompt change are 
 
 ## Monitoring and Feedback
 
-The `/quality` dashboard reads `GET /api/monitoring` and displays agent latency, tokens, estimated
-cost, tool usage, analyses, and feedback. Set `LOGFIRE_TOKEN` to send the same PydanticAI agent runs
-to Logfire as grouped `coach_session` traces. Without a token, local JSONL monitoring remains active.
+The `/quality` dashboard reads `GET /api/monitoring` and displays analyses, retrieval, practice,
+hint use, evaluation runs, and feedback. Set `LOGFIRE_TOKEN` to send offline PydanticAI evaluation
+to Logfire. Without a token, local JSONL monitoring remains active.
 Helpful/not-helpful buttons on each critical moment write feedback events. Export those events with:
 
 ```bash
@@ -204,8 +219,16 @@ Run the capstone self-scorer:
 python3 scripts/score_project.py
 ```
 
-## Reference
+## Documentation
 
-The UI direction is inspired by the Reddit post "Built a chess coach to help players improve by
-explaining critical moments in your games" and by the provided screenshot in `docs/reference-ui.png`.
-The implementation is original and adapted to this capstone rubric.
+| Doc | Purpose |
+| --- | --- |
+| [`docs/architecture.md`](docs/architecture.md) | Learning loop, storage, retrieval, and HTTP flow |
+| [`docs/moment_selection.md`](docs/moment_selection.md) | Lichess-style winning-chance thresholds and theme rules |
+| [`docs/evaluation_results.md`](docs/evaluation_results.md) | Retrieval benchmark and MiniMax judge tuning |
+| [`docs/manual_evaluation.md`](docs/manual_evaluation.md) | Hand-reviewed ground-truth coaching cases |
+| [`docs/monitoring.md`](docs/monitoring.md) | JSONL events, Logfire, feedback, and `/quality` dashboard |
+| [`docs/chess-coach-presentation.html`](docs/chess-coach-presentation.html) | Optional single-page codebase guide for presentations |
+
+The UI direction is inspired by modern chess-coach products that pair analysis text with a board and
+move list. Screenshots live in `docs/presentation-assets/`.

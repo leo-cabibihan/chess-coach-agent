@@ -3,12 +3,11 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import chess
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .db_models import (
     CriticalMomentRow,
-    FlashcardRow,
     GameRow,
     PlayerRow,
     QuizAttemptRow,
@@ -17,7 +16,7 @@ from .db_models import (
     TrainingPositionRow,
 )
 from .engine import EngineAnalyzer
-from .models import EvaluationPanel, FlashcardItem, FlashcardsPanel, QuizPanel
+from .models import EvaluationPanel, QuizPanel
 from .repositories import get_or_create_player, recompute_player_memory, training_session_view
 
 
@@ -58,6 +57,7 @@ def build_training_session(
     username: str,
     theme: str | None = None,
     position_count: int = 5,
+    moment_id: str | None = None,
 ) -> TrainingPlanRow:
     player = get_or_create_player(session, platform, username)
     moment_query = (
@@ -66,17 +66,28 @@ def build_training_session(
         .where(GameRow.player_id == player.id, CriticalMomentRow.best_san.is_not(None))
         .order_by(CriticalMomentRow.severity.desc())
     )
-    if theme:
+    if moment_id:
+        moment_query = moment_query.where(
+            CriticalMomentRow.external_moment_id == moment_id
+        )
+    elif theme:
         moment_query = moment_query.where(CriticalMomentRow.theme == theme)
-    moments = session.scalars(moment_query.limit(position_count)).all()
-    if not moments and theme:
-        moments = session.scalars(
+    candidates = session.scalars(moment_query).all()
+    trainable = [
+        item for item in candidates if (item.explanation or {}).get("trainable", False)
+    ]
+    moments = (trainable or candidates)[:position_count]
+    if not moments and (theme or moment_id):
+        candidates = session.scalars(
             select(CriticalMomentRow)
             .join(GameRow, CriticalMomentRow.game_id == GameRow.id)
             .where(GameRow.player_id == player.id, CriticalMomentRow.best_san.is_not(None))
             .order_by(CriticalMomentRow.severity.desc())
-            .limit(position_count)
         ).all()
+        trainable = [
+            item for item in candidates if (item.explanation or {}).get("trainable", False)
+        ]
+        moments = (trainable or candidates)[:position_count]
     selected_theme = theme or (moments[0].theme if moments else "candidate_move_discipline")
     difficulty = difficulty_for(session, player, selected_theme)
     plan = TrainingPlanRow(
@@ -226,50 +237,3 @@ def evaluate_attempt(
         explanation=explanation,
         next_review_at=schedule.due_at,
     )
-
-
-def generate_flashcards(
-    session: Session, player_id: str, theme: str | None = None, limit: int = 5
-) -> FlashcardsPanel:
-    query = (
-        select(CriticalMomentRow)
-        .join(GameRow, CriticalMomentRow.game_id == GameRow.id)
-        .where(GameRow.player_id == player_id)
-        .order_by(CriticalMomentRow.severity.desc())
-    )
-    if theme:
-        query = query.where(CriticalMomentRow.theme == theme)
-    moments = session.scalars(query.limit(limit)).all()
-    cards: list[FlashcardItem] = []
-    for moment in moments:
-        existing = session.scalar(
-            select(FlashcardRow).where(
-                FlashcardRow.player_id == player_id,
-                FlashcardRow.moment_id == moment.id,
-            )
-        )
-        if existing is None:
-            existing = FlashcardRow(
-                player_id=player_id,
-                moment_id=moment.id,
-                fen=moment.fen_before,
-                prompt="What is the strongest move and the underlying principle?",
-                answer=f"{moment.best_san or 'Find a forcing move'} — {(moment.explanation or {}).get('principle', moment.theme)}",
-                theme=moment.theme,
-            )
-            session.add(existing)
-            session.flush()
-        cards.append(
-            FlashcardItem(
-                id=existing.id,
-                fen=existing.fen,
-                prompt=existing.prompt,
-                answer=existing.answer,
-                theme=existing.theme,
-            )
-        )
-    return FlashcardsPanel(title=f"{theme or 'Personal'} review deck", cards=cards)
-
-
-def attempt_count(session: Session, player_id: str) -> int:
-    return session.scalar(select(func.count(QuizAttemptRow.id)).where(QuizAttemptRow.player_id == player_id)) or 0

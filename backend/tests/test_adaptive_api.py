@@ -4,9 +4,10 @@ from sqlalchemy import select
 from chess_coach_agent.api import app
 from chess_coach_agent.db import session_scope
 from chess_coach_agent.db_models import ReviewScheduleRow
+from chess_coach_agent.importers import preview_pgn_games
 
 
-def test_persistent_coach_training_and_progress_flow(monkeypatch):
+def test_persistent_training_and_progress_flow(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     with TestClient(app) as client:
         sample = client.get("/api/sample").json()
@@ -20,34 +21,21 @@ def test_persistent_coach_training_and_progress_flow(monkeypatch):
             },
         )
         assert analysis.status_code == 200
+        analyzed_moment = analysis.json()["analyses"][0]["moments"][0]
 
-        coach = client.post(
-            "/api/coach/sessions",
-            json={"platform": "chess.com", "username": "kfctofu"},
+        exact_training = client.post(
+            "/api/training/sessions",
+            json={
+                "platform": "chess.com",
+                "username": "kfctofu",
+                "theme": analyzed_moment["theme"],
+                "moment_id": analyzed_moment["id"],
+                "position_count": 1,
+            },
         )
-        assert coach.status_code == 200
-        coach_id = coach.json()["id"]
-
-        turn = client.post(
-            f"/api/coach/sessions/{coach_id}/messages",
-            json={"content": "Give me a practice quiz from my games"},
-        )
-        assert turn.status_code == 200
-        message_id = turn.json()["message_id"]
-        stream = client.get(
-            f"/api/coach/sessions/{coach_id}/stream",
-            params={"message_id": message_id},
-        )
-        assert stream.status_code == 200
-        assert "event: panel_ready" in stream.text
-        assert "event: complete" in stream.text
-        resumed = client.get(
-            f"/api/coach/sessions/{coach_id}/stream",
-            params={"message_id": message_id},
-            headers={"Last-Event-ID": "1"},
-        )
-        assert "id: 1\n" not in resumed.text
-        assert "event: complete" in resumed.text
+        assert exact_training.status_code == 200
+        assert len(exact_training.json()["positions"]) == 1
+        assert exact_training.json()["positions"][0]["fen"] == analyzed_moment["fen_before"]
 
         training = client.post(
             "/api/training/sessions",
@@ -96,3 +84,44 @@ def test_persistent_coach_training_and_progress_flow(monkeypatch):
         assert progress.status_code == 200
         assert progress.json()["total_games"] >= 1
         assert progress.json()["recent_attempts"] >= 2
+
+
+def test_full_history_sync_deduplicates_analyzed_games(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    with TestClient(app) as client:
+        sample = client.get("/api/sample").json()
+        one_game_pgn = preview_pgn_games(
+            sample["pgn"], "kfctofu", "chess.com", max_games=1
+        )[0].pgn
+
+        async def sample_history(
+            _platform: str, _username: str, _max_games: int
+        ) -> str:
+            return one_game_pgn
+
+        monkeypatch.setattr(
+            "chess_coach_agent.adaptive_api.fetch_platform_pgn", sample_history
+        )
+        analyzed = client.post(
+            "/api/analyze",
+            json={
+                "pgn": one_game_pgn,
+                "player": "kfctofu",
+                "platform": "chess.com",
+                "max_games": 1,
+            },
+        )
+        assert analyzed.status_code == 200
+
+        started = client.post(
+            "/api/games/sync",
+            json={"platform": "chess.com", "username": "kfctofu", "max_games": 5000},
+        )
+        assert started.status_code == 200
+        job = client.get(f"/api/games/sync/{started.json()['id']}")
+        assert job.status_code == 200
+        payload = job.json()
+        assert payload["status"] == "complete"
+        assert payload["total_games"] == 1
+        assert payload["analyzed_games"] == 0
+        assert payload["skipped_games"] == 1

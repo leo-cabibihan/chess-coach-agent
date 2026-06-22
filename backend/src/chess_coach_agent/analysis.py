@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import chess
 
 from .engine import EngineAnalyzer, PIECE_VALUES
@@ -15,6 +17,30 @@ THEME_PRINCIPLES = {
     "opening_drift": "In the opening, repeated queen moves and undeveloped minors usually give the opponent free tempos.",
     "endgame_conversion": "In simplified positions, activity and pawn races matter more than one-move material grabs.",
 }
+
+ANALYSIS_VERSION = "lichess-win-chance-v1"
+
+
+def winning_chances(score_cp: int) -> float:
+    """Map a player-POV engine score to Lichess-style winning chances [-1, 1]."""
+    cp = max(-1000, min(1000, score_cp))
+    return 2 / (1 + math.exp(-0.00368208 * cp)) - 1
+
+
+def classify_win_chance_loss(loss: float) -> str | None:
+    if loss >= 0.30:
+        return "blunder"
+    if loss >= 0.20:
+        return "mistake"
+    if loss >= 0.10:
+        return "inaccuracy"
+    return None
+
+
+def move_accuracy(win_probability_loss: float) -> float:
+    win_percent_loss = max(0.0, win_probability_loss * 50)
+    raw = 103.1668100711649 * math.exp(-0.04354415386753951 * win_percent_loss)
+    return max(0.0, min(100.0, raw - 3.166924740191411 + 1))
 
 
 def _castled(board: chess.Board, color: bool) -> bool:
@@ -34,10 +60,26 @@ def _undefended_attacked_value(board: chess.Board, color: bool) -> int:
     return best
 
 
-def _moment_text(theme: str, played: str, best: str | None, swing: float | None) -> tuple[str, str, str, str]:
+def _king_danger(board: chess.Board, color: bool) -> int:
+    king = board.king(color)
+    if king is None:
+        return 0
+    zone = chess.SquareSet(chess.BB_KING_ATTACKS[king] | chess.BB_SQUARES[king])
+    return sum(bool(board.attackers(not color, square)) for square in zone)
+
+
+def _moment_text(
+    theme: str,
+    judgment: str,
+    played: str,
+    best: str | None,
+    win_percent_loss: float,
+) -> tuple[str, str, str, str]:
     best_text = best or "the engine's candidate"
-    swing_text = f" The evaluation changed by about {swing:.2f} pawns." if swing is not None else ""
-    summary = f"{played} was a critical moment; {best_text} gave a cleaner plan.{swing_text}"
+    summary = (
+        f"{played} was a {judgment}; {best_text} preserved about "
+        f"{win_percent_loss:.1f} more percentage points of winning chances."
+    )
     what = {
         "loose_piece": f"{played} left material tactically vulnerable.",
         "missed_tactic": f"{played} missed a forcing resource in the position.",
@@ -68,7 +110,11 @@ def _moment_text(theme: str, played: str, best: str | None, swing: float | None)
     return summary, what, better, drill
 
 
-def analyze_parsed_game(parsed: ParsedGame, player: str = "kfctofu", max_moments: int = 4) -> CoachAnalysis:
+def analyze_parsed_game(
+    parsed: ParsedGame,
+    player: str = "kfctofu",
+    max_moments: int | None = None,
+) -> CoachAnalysis:
     analyzer = EngineAnalyzer()
     player_color = chess.WHITE if parsed.metadata.player_color == "white" else chess.BLACK
     board = parsed.game.board()
@@ -80,49 +126,69 @@ def analyze_parsed_game(parsed: ParsedGame, player: str = "kfctofu", max_moments
             before = board.copy(stack=False)
             mover = before.turn
             played_san = before.san(move)
+            if mover != player_color:
+                board.push(move)
+                continue
+
+            moving_piece = before.piece_at(move.from_square)
+            if moving_piece and moving_piece.piece_type == chess.QUEEN:
+                queen_moves += 1
+
             before_line = analyzer.analyse(before, player_color)
-            best_san = before.san(before_line.best_move) if before_line.best_move in before.legal_moves else None
+            best_san = (
+                before.san(before_line.best_move)
+                if before_line.best_move in before.legal_moves
+                else None
+            )
             board.push(move)
             after = board.copy(stack=False)
             after_line = analyzer.analyse(after, player_color)
 
-            if mover != player_color:
-                continue
-
             swing = None
+            chance_loss = None
+            judgment = None
             if before_line.score_cp is not None and after_line.score_cp is not None:
                 swing = (before_line.score_cp - after_line.score_cp) / 100
+                chance_loss = max(
+                    0.0,
+                    winning_chances(before_line.score_cp)
+                    - winning_chances(after_line.score_cp),
+                )
+                judgment = classify_win_chance_loss(chance_loss)
 
-            theme = ""
-            severity = 0.0
-            moving_piece = before.piece_at(move.from_square)
-            loose_value = _undefended_attacked_value(after, player_color)
-            if loose_value >= 300:
-                theme = "loose_piece"
-                severity = loose_value / 100
-            if swing is not None and swing >= 1.2 and not theme:
-                theme = "missed_tactic"
-                severity = max(severity, swing)
-            if board.fullmove_number <= 12 and moving_piece and moving_piece.piece_type == chess.QUEEN:
-                queen_moves += 1
-                if queen_moves >= 2 and not theme:
-                    theme = "opening_drift"
-                    severity = 2.0 + queen_moves
-            if before.fullmove_number >= 10 and not _castled(after, player_color) and not theme:
-                theme = "king_safety"
-                severity = 2.0
-            if phase_for_board(after) == "endgame" and swing is not None and swing >= 0.8 and not theme:
-                theme = "endgame_conversion"
-                severity = swing
-            if not theme:
+            if before_line.best_move == move or judgment is None or chance_loss is None:
                 continue
+
+            theme = "missed_tactic"
+            loose_before = _undefended_attacked_value(before, player_color)
+            loose_after = _undefended_attacked_value(after, player_color)
+            if loose_after >= 300 and loose_after > loose_before:
+                theme = "loose_piece"
+            elif (
+                board.fullmove_number <= 12
+                and moving_piece
+                and moving_piece.piece_type == chess.QUEEN
+            ):
+                if queen_moves >= 2:
+                    theme = "opening_drift"
+            elif (
+                before.fullmove_number >= 10
+                and not _castled(after, player_color)
+                and _king_danger(after, player_color) > _king_danger(before, player_color)
+            ):
+                theme = "king_safety"
+            elif phase_for_board(after) == "endgame":
+                theme = "endgame_conversion"
 
             fen_best = None
             if before_line.best_move in before.legal_moves:
                 best_board = before.copy(stack=False)
                 best_board.push(before_line.best_move)
                 fen_best = best_board.fen()
-            summary, what, better, drill = _moment_text(theme, played_san, best_san, swing)
+            win_percent_loss = chance_loss * 50
+            summary, what, better, drill = _moment_text(
+                theme, judgment, played_san, best_san, win_percent_loss
+            )
             moments.append(
                 CriticalMoment(
                     id=f"{parsed.game_id}-{move_record.ply}",
@@ -139,7 +205,11 @@ def analyze_parsed_game(parsed: ParsedGame, player: str = "kfctofu", max_moments
                     eval_before=before_line.score_cp / 100 if before_line.score_cp is not None else None,
                     eval_after=after_line.score_cp / 100 if after_line.score_cp is not None else None,
                     eval_swing=swing,
-                    severity=round(severity, 2),
+                    severity=round(win_percent_loss, 2),
+                    judgment=judgment,
+                    win_probability_loss=round(win_percent_loss, 2),
+                    move_accuracy=round(move_accuracy(chance_loss), 1),
+                    trainable=judgment in ("mistake", "blunder"),
                     summary=summary,
                     what_happened=what,
                     better_plan=better,
@@ -150,41 +220,30 @@ def analyze_parsed_game(parsed: ParsedGame, player: str = "kfctofu", max_moments
     finally:
         analyzer.close()
 
-    moments = sorted(moments, key=lambda m: m.severity, reverse=True)[:max_moments]
-    if not moments and parsed.moves:
-        first_player = next((m for m in parsed.moves if m.is_player_move), parsed.moves[0])
-        moments.append(
-            CriticalMoment(
-                id=f"{parsed.game_id}-baseline",
-                game_id=parsed.game_id,
-                ply=first_player.ply,
-                move_number=first_player.move_number,
-                phase="opening",
-                theme="missed_tactic",
-                played_san=first_player.san,
-                best_san=None,
-                fen_before=first_player.fen_before,
-                fen_after=first_player.fen_after,
-                severity=1.0,
-                summary="No major tactical collapse was found, so this is a baseline candidate moment.",
-                what_happened="Use this position to practice candidate move discipline.",
-                better_plan="List checks, captures, and threats before evaluating quiet moves.",
-                principle=THEME_PRINCIPLES["missed_tactic"],
-                drill_prompt="Spend three minutes finding all legal checks and captures.",
-            )
-        )
+    moments = sorted(moments, key=lambda m: m.ply)
+    if max_moments is not None:
+        moments = sorted(moments, key=lambda m: m.severity, reverse=True)[:max_moments]
+        moments.sort(key=lambda m: m.ply)
     themes = ", ".join(sorted({m.theme.replace("_", " ") for m in moments}))
     notes = retrieve_notes(themes, top_k=3)
-    training_plan = [
-        f"Replay {len(moments)} critical positions without moving pieces, then write three candidate moves.",
-        "For each loss, mark whether the mistake was tactical, positional, or time-management related.",
-        "Do a daily five-position drill from your own games before playing new blitz games.",
-    ]
+    trainable_count = sum(moment.trainable for moment in moments)
+    training_plan = (
+        [
+            f"Replay the {trainable_count} mistake/blunder positions without moving pieces, then write three candidate moves.",
+            "For each loss, mark whether the mistake was tactical, positional, or time-management related.",
+            "Do a daily five-position drill from your own games before playing new blitz games.",
+        ]
+        if moments
+        else [
+            "No move crossed the inaccuracy threshold in this game.",
+            "Review the opening and endgame plans without manufacturing a tactical drill.",
+        ]
+    )
     return CoachAnalysis(
         game=parsed.metadata,
         moves=parsed.moves,
         moments=moments,
         summary=f"Found {len(moments)} coachable moments. Main themes: {themes or 'candidate move discipline'}.",
         training_plan=training_plan,
-        retrieval_notes=[f"{n.title}: {n.snippet}" for n in notes],
+        retrieval_notes=[ANALYSIS_VERSION, *[f"{n.title}: {n.snippet}" for n in notes]],
     )

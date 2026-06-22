@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Activity, ArrowRight, BookOpenCheck, Clock3, Database, Target } from 'lucide-react';
-import { createCoachSession, getProgress } from '../lib/api';
+import { createTrainingSession, getProgress } from '../lib/api';
 import { useWorkspace } from '../workspace/WorkspaceContext';
 
 export function HomePage() {
@@ -16,8 +16,8 @@ export function HomePage() {
   const focus = themes[0]?.[0]?.replace(/_/g, ' ') || 'candidate move discipline';
 
   async function continueTraining() {
-    const session = await createCoachSession(workspace.player, workspace.platform);
-    await navigate({ to: '/coach/$sessionId', params: { sessionId: session.id } });
+    const session = await createTrainingSession(workspace.player, workspace.platform);
+    await navigate({ to: '/practice/$sessionId', params: { sessionId: session.id } });
   }
 
   return (
@@ -42,7 +42,7 @@ export function HomePage() {
               ? `This pattern represents ${Math.round(themes[0][1] * 100)}% of your stored critical moments.`
               : 'Analyze games to build a personal weakness profile and practice queue.'}
           </p>
-          <button className="primary" onClick={continueTraining}>Open coach <ArrowRight size={17} /></button>
+          <button className="primary" onClick={continueTraining}>Start practice <ArrowRight size={17} /></button>
         </div>
         <div className="focus-metrics">
           <div><Database size={18} /><strong>{progress.data?.total_games || workspace.analyses.length}</strong><span>Games</span></div>
@@ -57,8 +57,8 @@ export function HomePage() {
           <strong>{workspace.analyses.length ? `${workspace.analyses.length} games ready in this browser` : 'Bring in recent games'}</strong>
           <span>{workspace.status}</span>
         </div>
-        <button className="secondary" onClick={() => navigate({ to: '/analyze' })}>
-          <Database size={16} /> Analyze games
+        <button className="secondary" onClick={() => navigate({ to: '/games', search: { import: true } })}>
+          <Database size={16} /> Import games
         </button>
       </section>
     </main>

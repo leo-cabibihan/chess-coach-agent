@@ -1,19 +1,18 @@
 # Monitoring
 
-PydanticAI runs are instrumented with Logfire and grouped under a `coach_session` span when
-`LOGFIRE_TOKEN` is configured. The app also records local JSONL events in
+Offline PydanticAI evaluation runs are instrumented with Logfire when `LOGFIRE_TOKEN` is configured.
+The app also records local JSONL events in
 `backend/data/logs/events.jsonl`, so monitoring works for local and credential-free review.
 
 The React **Quality monitoring** dashboard calls `GET /api/monitoring` and displays total events,
-completed analyses, LLM calls, input/output tokens, estimated model cost, average chat latency,
-feedback volume, helpful rate, tool usage, stream failures, training sessions, quiz accuracy, hint
-use, retrieval method, memory retrieval, and event-count bars.
+completed analyses, optional evaluation calls, feedback volume, helpful rate, tool usage, training
+sessions, quiz accuracy, hint use, retrieval method, and event-count bars.
 
-Recorded events include `analysis_requested`, `analysis_completed`, `games_previewed`, `games_imported`,
-`chat_requested`, `chat_completed`, `coach_session_started`, `coach_turn_completed`,
-`training_session_created`, `quiz_attempted`, `memory_retrieved`, and `moment_feedback`. Chat completion events record whether the
-OpenRouter model was used, its model usage, estimated cost, executed tools, trace ID, and latency.
-Analysis completion events record game, moment, theme, and timing data.
+Active product events include `analysis_requested`, `analysis_timing`, `analysis_completed`,
+`games_sync_completed`, `games_sync_failed`, `training_session_created`, `quiz_attempted`, and
+`moment_feedback`. Historical chat and stream event fields are still accepted by the dashboard so
+older JSONL logs remain readable. `analysis_completed` records game, moment, and theme counts;
+`analysis_timing` records paste-import duration from `POST /api/analyze`.
 
 To send traces to Logfire, create a project token and set it before starting the API:
 

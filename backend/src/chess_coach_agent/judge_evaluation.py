@@ -16,6 +16,17 @@ JudgeCall = Callable[[str, str], Awaitable[tuple[str, bool]]]
 
 def _candidate_text(response: Any, variant: str) -> str:
     analysis = response.analyses[0]
+    if not analysis.moments:
+        if variant == "concise":
+            return "No move crossed the calibrated winning-chance-loss threshold."
+        return (
+            "Theme: no engine-significant error\n"
+            "Played move: unavailable\n"
+            "Recommended move: unavailable\n"
+            "What happened: no move crossed the calibrated threshold\n"
+            "Principle: do not manufacture a mistake from a quiet position\n"
+            "Drill: none; send this fixture for human review"
+        )
     moment = analysis.moments[0]
     if variant == "concise":
         return f"Theme: {moment.theme}. {moment.summary}"

@@ -11,3 +11,4 @@ backend/data/logs/
 backend/data/*.db
 backend/data/eval/feedback_candidates.jsonl
 backend/.ruff_cache/
+.understand-anything/

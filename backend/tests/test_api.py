@@ -18,16 +18,3 @@ def test_analyze_endpoint_with_sample():
     assert response.status_code == 200
     payload = response.json()
     assert payload["analyses"][0]["moments"]
-
-
-def test_chat_without_model_key_returns_structured_fallback(monkeypatch):
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-    client = TestClient(app)
-    response = client.post("/api/chat", json={"question": "How do I find forcing moves?"})
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["used_llm"] is False
-    assert payload["coaching"]["drill"]
-    assert 0 <= payload["coaching"]["confidence"] <= 1
-    assert len(payload["tools_used"]) >= 2
-    assert payload["trace_id"]

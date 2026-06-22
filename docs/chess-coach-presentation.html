@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chess Coach Agent — Codebase Guide</title>
+  <style>
+    :root {
+      --ink: #17211b;
+      --muted: #5d6861;
+      --paper: #f6f7f3;
+      --panel: #ffffff;
+      --line: #d9ded8;
+      --green: #28734f;
+      --green-soft: #dceee3;
+      --amber: #d88921;
+      --amber-soft: #faead3;
+      --red: #b94848;
+      --red-soft: #f4dddd;
+      --cyan: #21758a;
+      --cyan-soft: #d9edf1;
+      --black: #101512;
+      --nav-h: 54px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    a { color: var(--green); }
+    code, .mono {
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: #eef1ec;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 28px;
+      background: rgba(16, 21, 18, 0.94);
+      color: #eef5ef;
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #2b352f;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    nav a {
+      color: #c8d4cb;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 650;
+    }
+    nav a:hover, nav a.active { color: #fff; }
+    nav .brand {
+      color: #fff;
+      font-weight: 800;
+      margin-right: 8px;
+      letter-spacing: -0.02em;
+    }
+    main { max-width: 1080px; margin: 0 auto; padding: 42px 28px 80px; }
+    section { margin-bottom: 64px; scroll-margin-top: calc(var(--nav-h) + 18px); }
+    h1 {
+      font-size: clamp(34px, 5vw, 52px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin: 0 0 16px;
+      max-width: 820px;
+    }
+    h2 {
+      font-size: clamp(24px, 3vw, 32px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0 0 14px;
+    }
+    h3 { font-size: 17px; margin: 0 0 8px; }
+    .lead { font-size: 19px; color: var(--muted); max-width: 760px; margin: 0 0 24px; }
+    .eyebrow {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+    .rule { width: 56px; height: 4px; background: var(--amber); margin: 22px 0; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 750;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .pill.amber { background: var(--amber-soft); color: #945a0e; }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .pill.cyan { background: var(--cyan-soft); color: var(--cyan); }
+    .metric { border-top: 4px solid var(--green); }
+    .metric strong { display: block; font-size: 28px; line-height: 1; margin: 4px 0 6px; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 18px 0;
+    }
+    .node {
+      flex: 1 1 120px;
+      min-height: 96px;
+      display: grid;
+      align-content: center;
+      text-align: center;
+      padding: 12px;
+      background: white;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--green);
+      border-radius: 8px;
+    }
+    .node b { font-size: 14px; }
+    .node small { color: var(--muted); margin-top: 5px; line-height: 1.3; display: block; }
+    .arrow { display: grid; place-items: center; color: var(--amber); font-size: 22px; font-weight: 900; }
+    .callout {
+      padding: 14px 17px;
+      border-left: 4px solid var(--amber);
+      background: var(--amber-soft);
+      font-size: 14px;
+      border-radius: 0 8px 8px 0;
+    }
+    .diagram {
+      background: var(--black);
+      color: #eef5ef;
+      border-radius: 8px;
+      padding: 20px;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .batch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .batch {
+      border-left: 4px solid var(--cyan);
+      padding: 14px;
+      background: white;
+      border: 1px solid var(--line);
+      border-left-width: 4px;
+      border-radius: 8px;
+    }
+    .batch b { font-size: 14px; }
+    .batch p { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+    .batch ul { margin: 8px 0 0; padding-left: 18px; font-size: 12px; color: var(--muted); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { background: #eef1ec; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+    tr:last-child td { border-bottom: 0; }
+    .lesson { color: var(--cyan); font-size: 12px; }
+    .module-list { display: grid; gap: 10px; }
+    .module {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 14px;
+      padding: 14px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .module .path { font: 12px/1.4 ui-monospace, monospace; color: var(--green); font-weight: 700; }
+    .module .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #eef1ec;
+      color: var(--muted);
+    }
+    .sequence {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 0 18px;
+    }
+    .actor {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      padding-top: 10px;
+      text-align: right;
+    }
+    .event {
+      position: relative;
+      padding: 8px 14px;
+      border-left: 2px solid var(--line);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .event::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .event.warn::before { background: var(--amber); }
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .shot {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 10px 28px rgba(25, 35, 28, 0.1);
+    }
+    .shot img { width: 100%; height: 220px; object-fit: cover; object-position: top; display: block; }
+    .shot figcaption { padding: 10px 12px; font-size: 12px; color: var(--muted); }
+    .review-list { display: grid; gap: 10px; }
+    .review-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .priority {
+      display: grid;
+      place-items: center;
+      height: 28px;
+      font-weight: 850;
+      font-size: 12px;
+      background: var(--red-soft);
+      color: var(--red);
+      border-radius: 4px;
+    }
+    .priority.p2 { background: var(--amber-soft); color: #945a0e; }
+    .priority.done { background: var(--green-soft); color: var(--green); }
+    .review-item p { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+    .small { color: var(--muted); font-size: 13px; }
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 800px) {
+      .grid-2, .grid-3, .grid-4, .shots { grid-template-columns: 1fr; }
+      .module { grid-template-columns: 1fr; }
+      .sequence { grid-template-columns: 1fr; }
+      .actor { text-align: left; padding-top: 0; }
+      nav { padding: 0 14px; }
+      main { padding: 28px 14px 60px; }
+    }
+  </style>
+</head>
+<body>
+  <nav aria-label="Page sections">
+    <span class="brand">Chess Coach Agent</span>
+    <a href="#overview">Overview</a>
+    <a href="#ua-scan">Understand Anything</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#modules">Modules</a>
+    <a href="#flows">Data flows</a>
+    <a href="#lessons">Learn Agents</a>
+    <a href="#evaluation">Evaluation</a>
+    <a href="#review">Code review</a>
+    <a href="#product">Product</a>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <div class="eyebrow">AI Engineering Buildcamp Capstone</div>
+      <h1>From 2,775 games to deliberate chess practice.</h1>
+      <p class="lead">A grounded learning system that imports a player's full history, finds recurring weaknesses with Stockfish, turns real mistakes into board drills, grades attempts, and adapts review over time. This page maps every major part of the codebase to the techniques taught in the <code>learn-agents</code> course notes.</p>
+      <div class="rule"></div>
+      <div class="grid-4">
+        <div class="card metric"><span>Analyzed games</span><strong>2,775</strong><span>kfctofu on Chess.com</span></div>
+        <div class="card metric"><span>Critical moments</span><strong>13,910</strong><span>0–25 per game, not a fixed quota</span></div>
+        <div class="card metric"><span>Trainable moments</span><strong>7,428</strong><span>Mistakes and blunders</span></div>
+        <div class="card metric"><span>Project scorer</span><strong>35/35</strong><span><code>scripts/score_project.py</code></span></div>
+      </div>
+      <div class="callout" style="margin-top:22px"><b>Product boundary:</b> the shipped workflow is deterministic practice. Stockfish is the chess authority. PydanticAI, BM25 retrieval, and MiniMax judge runs live in an offline evaluation lane — they never block ordinary training.</div>
+    </section>
+
+    <section id="ua-scan">
+      <div class="eyebrow">Understand Anything scan</div>
+      <h2>116 files clustered into 14 semantic batches.</h2>
+      <p class="small">Scanned with <a href="https://understand-anything.com/">Understand Anything</a> (Egonex-AI). Phase 1 resolved imports across Python, TypeScript, docs, and infra. Phase 2 produced per-file summaries, function nodes, and cross-batch neighbor edges. Artifacts live in <code>.understand-anything/intermediate/</code>.</p>
+
+      <div class="grid-3" style="margin-top:20px">
+        <div class="card"><span class="pill">Scan</span><h3 style="margin-top:10px">Frameworks detected</h3><p class="small">FastAPI, React, Vite, SQLAlchemy, Alembic, Pytest, Docker, GitHub Actions, Pydantic, Uvicorn</p></div>
+        <div class="card"><span class="pill amber">Graph</span><h3 style="margin-top:10px">Louvain clustering</h3><p class="small">14 batches group tightly coupled modules: frontend shell, persistence/retrieval, API core, tests, deployment docs</p></div>
+        <div class="card"><span class="pill cyan">Hotspots</span><h3 style="margin-top:10px">Highest complexity</h3><p class="small"><code>adaptive_api.py</code>, <code>router.tsx</code>, <code>repositories.py</code> — orchestration and persistence boundaries</p></div>
+      </div>
+
+      <h3 style="margin-top:28px">Batch map (import neighborhoods)</h3>
+      <div class="batch-grid">
+        <div class="batch">
+          <b>Batch 1 — React client</b>
+          <p>14 files. TanStack Router shell, pages, API client, workspace context.</p>
+          <ul><li><code>router.tsx</code> orchestrates games, review, practice, quality</li><li>Imports only <code>lib/api.ts</code> + <code>lib/types.ts</code> toward backend</li></ul>
+        </div>
+        <div class="batch">
+          <b>Batch 2 — Persistence &amp; AI lane</b>
+          <p>13 files. DB, repositories, retrieval, embeddings, memory, training, PydanticAI tools.</p>
+          <ul><li><code>knowledge.py</code> ↔ <code>embeddings.py</code></li><li><code>llm.py</code> ↔ <code>coach_tools.py</code></li><li>Neighbors: <code>adaptive_api.py</code>, <code>analysis.py</code></li></ul>
+        </div>
+        <div class="batch">
+          <b>Batch 3 — API &amp; analysis core</b>
+          <p>9 files. FastAPI routes, sync worker, Stockfish analysis, importers, monitoring.</p>
+          <ul><li><code>adaptive_api.py</code> calls <code>repositories</code>, <code>training</code>, <code>analysis</code></li><li><code>analysis.py</code> calls <code>engine.py</code> + <code>knowledge.py</code></li></ul>
+        </div>
+        <div class="batch">
+          <b>Batch 10 — Knowledge chunks</b>
+          <p>4 curated Markdown lessons (~500-token chunks) for retrieval benchmarks.</p>
+          <ul><li>tactical-vision, loose-pieces, king-safety, opening-principles</li></ul>
+        </div>
+        <div class="batch">
+          <b>Batch 11 — Project docs</b>
+          <p>Architecture, evaluation, monitoring, moment selection, course mapping.</p>
+        </div>
+        <div class="batch">
+          <b>Batch 13 — Tests &amp; eval data</b>
+          <p>12 test modules (18 pytest cases), Alembic migrations, JSONL ground-truth datasets, scorer script neighbors.</p>
+        </div>
+      </div>
+
+      <div class="diagram" style="margin-top:22px">Understand Anything call graph (simplified)
+
+  [React Batch 1] ──HTTP──► [api.py + adaptive_api.py Batch 3]
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+            [analysis.py]   [repositories.py]  [training.py]
+                    │               │               │
+                    ▼               ▼               ▼
+              [engine.py]     [db_models.py]   [coach_tools.py]
+                    │                               │
+                    └──────── heuristics ───────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+            [knowledge.py + embeddings.py]    [llm.py PydanticAI]
+                    │                               │
+                    └──── retrieval_evaluation ─────┘
+                                    │
+                                    ▼
+                         [judge_evaluation + tests]</div>
+    </section>
+
+    <section id="architecture">
+      <div class="eyebrow">System design</div>
+      <h2>Deterministic chess core, optional AI evaluation lane.</h2>
+      <div class="flow">
+        <div class="node"><b>React 19</b><small>TanStack Router + Query</small></div>
+        <div class="arrow">⇄</div>
+        <div class="node"><b>FastAPI</b><small>Typed HTTP boundary</small></div>
+        <div class="arrow">⇄</div>
+        <div class="node"><b>Postgres + pgvector</b><small>SQLite fallback locally</small></div>
+        <div class="arrow">+</div>
+        <div class="node"><b>Stockfish</b><small>Chess authority</small></div>
+        <div class="arrow">+</div>
+        <div class="node"><b>Chess.com / Lichess</b><small>Source games</small></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>Learning loop</h3>
+          <div class="diagram" style="margin-top:10px;font-size:12px">Chess.com / Lichess / PGN
+        │
+        ▼
+Full-history sync + PGN parser + Stockfish
+        │
+        ├─► games, analyses, critical moments ─► Progress analytics
+        │
+        ▼
+Direct practice from stored mistakes
+        │
+        ├─► board / quiz / evaluation panel
+        │
+        ▼
+Stockfish grading ─► quiz attempt ─► review schedule ─► player memory
+        ▲                                              │
+        └──────────── adaptive difficulty ─────────────┘</div>
+        </div>
+        <div class="card">
+          <h3>Persistent entities</h3>
+          <div class="flow" style="margin-top:8px">
+            <div class="node"><b>Player</b><small>platform + username</small></div>
+            <div class="arrow">›</div>
+            <div class="node"><b>Games</b><small>metadata + moves</small></div>
+            <div class="arrow">›</div>
+            <div class="node"><b>Moments</b><small>FEN, loss, theme</small></div>
+          </div>
+          <div class="flow">
+            <div class="node"><b>Training positions</b><small>difficulty + due</small></div>
+            <div class="arrow">‹</div>
+            <div class="node"><b>Attempts</b><small>move, hint, score</small></div>
+            <div class="arrow">‹</div>
+            <div class="node"><b>Player memory</b><small>weakness + mastery</small></div>
+          </div>
+          <p class="small" style="margin-top:10px">Raw FENs and engine scores stay relational. Only curated lesson chunks use 384-d FastEmbed vectors in pgvector.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="modules">
+      <div class="eyebrow">Module explorer</div>
+      <h2>What each file does (Understand Anything summaries).</h2>
+      <div class="module-list">
+        <div class="module">
+          <div><div class="path">adaptive_api.py</div><div class="tags"><span class="tag">api-handler</span><span class="tag">background-jobs</span><span class="tag">complex</span></div></div>
+          <div>REST endpoints for game sync, player profiles, training sessions, quiz attempts, and progress. <code>_process_sync_job</code> fetches platform PGNs, skips already-analyzed external IDs, runs Stockfish analysis, and persists results.</div>
+        </div>
+        <div class="module">
+          <div><div class="path">analysis.py</div><div class="tags"><span class="tag">chess-analysis</span><span class="tag">lichess-model</span></div></div>
+          <div>Converts centipawn swings into winning-chance loss, classifies inaccuracy/mistake/blunder, and attaches heuristic themes (loose piece, forcing tactics, king safety, opening drift, endgame conversion). No fixed moment quota.</div>
+        </div>
+        <div class="module">
+          <div><div class="path">training.py</div><div class="tags"><span class="tag">training</span><span class="tag">spaced-repetition</span></div></div>
+          <div>Builds adaptive plans from persisted critical moments. <code>evaluate_attempt</code> checks legality, compares pawn loss to best move, records attempts, and updates review schedule (1d wrong, 3d with hint, 7d clean, 30d mastered).</div>
+        </div>
+        <div class="module">
+          <div><div class="path">knowledge.py</div><div class="tags"><span class="tag">bm25</span><span class="tag">vector-search</span><span class="tag">hybrid-rrf</span></div></div>
+          <div>Title, BM25, vector cosine, and reciprocal-rank-fusion retrieval over lesson chunks. <code>production_strategy()</code> picks BM25 unless hybrid clears explicit MRR and latency gates from the 20-query benchmark.</div>
+        </div>
+        <div class="module">
+          <div><div class="path">llm.py + coach_tools.py</div><div class="tags"><span class="tag">pydantic-ai</span><span class="tag">nine-tools</span></div></div>
+          <div>PydanticAI agent with structured <code>CoachingOutput</code>. Tools inspect games, positions, moments, compare moves, generate quizzes, and build training sessions. Used by <code>test_tools.py</code> and <code>judge_evaluation.py</code>, not the live practice UI.</div>
+        </div>
+        <div class="module">
+          <div><div class="path">repositories.py</div><div class="tags"><span class="tag">persistence</span><span class="tag">hotspot</span></div></div>
+          <div>Persistence boundary for players, analyses, moments, training plans, memory recompute, and progress summaries. UA flagged this as a change hotspot alongside <code>router.tsx</code> and <code>styles.css</code>.</div>
+        </div>
+        <div class="module">
+          <div><div class="path">router.tsx</div><div class="tags"><span class="tag">tanstack-router</span><span class="tag">workflow</span></div></div>
+          <div>Typed route tree: <code>/</code> dashboard, <code>/games</code> library + sync, <code>/games/:id</code> review, <code>/practice/:id</code> drills, <code>/progress</code> trends, <code>/quality</code> monitoring. Legacy <code>/coach</code> redirects to practice.</div>
+        </div>
+        <div class="module">
+          <div><div class="path">monitoring.py</div><div class="tags"><span class="tag">jsonl</span><span class="tag">logfire</span></div></div>
+          <div>Local JSONL events plus optional Logfire traces. Exports feedback into evaluation candidates. Powers <code>MonitoringDashboard.tsx</code> at <code>/quality</code>.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="flows">
+      <div class="eyebrow">End-to-end flows</div>
+      <h2>Three pipelines the product actually runs.</h2>
+
+      <h3>1. Full-history sync</h3>
+      <div class="sequence">
+        <div class="actor">React</div><div class="event"><code>POST /api/games/sync</code> with platform, username, max games (up to 5,000).</div>
+        <div class="actor">FastAPI</div><div class="event">Create or resume one active <code>SyncJobRow</code>; schedule <code>_process_sync_job</code> as BackgroundTask.</div>
+        <div class="actor">importers.py</div><div class="event">Fetch Chess.com monthly archives or Lichess PGN stream; <code>preview_pgn_games</code> normalizes metadata.</div>
+        <div class="actor">repositories</div><div class="event">Skip external game IDs already analyzed at current detector version.</div>
+        <div class="actor">analysis.py</div><div class="event">Replay each new game with reused Stockfish process; persist all qualified moments.</div>
+        <div class="actor">React</div><div class="event">Poll <code>GET /api/games/sync/{job_id}</code>; refresh dashboard, library, practice queries.</div>
+        <div class="actor">Review</div><div class="event warn"><b>P1 debt:</b> BackgroundTasks can strand a durable row after process restart. Needs lease/heartbeat worker.</div>
+      </div>
+
+      <h3 style="margin-top:28px">2. Practice session</h3>
+      <div class="sequence">
+        <div class="actor">PracticePage</div><div class="event"><code>POST /api/training/sessions</code> — ranks moments by severity, theme accuracy, due date.</div>
+        <div class="actor">training.py</div><div class="event"><code>build_training_session</code> adapts move-choice count to player rating and theme performance.</div>
+        <div class="actor">Player</div><div class="event">Submits SAN/UCI move via <code>POST /api/training/sessions/{id}/attempts</code>.</div>
+        <div class="actor">engine.py</div><div class="event"><code>evaluate_attempt</code> validates legality, measures pawn loss vs best line, returns evaluation panel.</div>
+        <div class="actor">repositories</div><div class="event">Updates <code>QuizAttemptRow</code>, <code>ReviewScheduleRow</code>, recomputes player memory.</div>
+      </div>
+
+      <h3 style="margin-top:28px">3. Moment detection (Lichess model)</h3>
+      <div class="grid-2">
+        <div class="diagram">winning_chance(cp) = sigmoid(cp)
+
+loss = chance_before - chance_after
+
+accuracy = 103.1668·exp(-0.04354·loss%) - 3.1669
+
+Thresholds (player who moved):
+  ≥ 0.10  inaccuracy
+  ≥ 0.20  mistake (training default)
+  ≥ 0.30  blunder (highest priority)</div>
+        <div>
+          <p>Heuristics label a Stockfish-verified loss — they never invent a moment. A game can produce zero moments or twenty-five. See <code>docs/moment_selection.md</code> and Lichess analysis references.</p>
+          <div class="grid-3" style="margin-top:12px">
+            <div class="card"><span class="pill red">Loose piece</span><p class="small" style="margin-top:8px">Hanging or under-defended material</p></div>
+            <div class="card"><span class="pill amber">Forcing</span><p class="small" style="margin-top:8px">Missed checks, captures, threats</p></div>
+            <div class="card"><span class="pill cyan">King safety</span><p class="small" style="margin-top:8px">Exposure, open lines, castling</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lessons">
+      <div class="eyebrow">Learn Agents mapping</div>
+      <h2>How each course lesson shows up in this repo.</h2>
+      <p class="small">Lesson paths are relative to <code>~/Documents/random-notes/learn-agents/</code>. This table connects Buildcamp techniques to concrete artifacts discovered by Understand Anything and verified in tests.</p>
+
+      <table style="margin-top:18px">
+        <thead>
+          <tr><th>Course topic</th><th>Lesson reference</th><th>Project artifact</th><th>Evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>RAG foundations</b></td>
+            <td class="lesson">Week 1 → 04 - RAG (Retrieval-Augmented Generation).md<br>06 - Indexing data for search.md<br>07 - Chunking documents.md</td>
+            <td><code>knowledge.py</code>, <code>ingest_knowledge.py</code>, <code>backend/data/knowledge/*.md</code></td>
+            <td>Curated ~500-token lesson chunks; title, BM25, vector, hybrid strategies compared on 20 hand-authored queries.</td>
+          </tr>
+          <tr>
+            <td><b>Structured output</b></td>
+            <td class="lesson">Week 1 → 05 - Structured Output<br>Week 3 → 05 - Structured output with agents.md</td>
+            <td><code>models.py</code> → <code>CoachingOutput</code>, <code>EvaluationPanel</code>, <code>QuizPanel</code></td>
+            <td>Pydantic validates evidence, principle, drill, move, confidence fields before judge scoring.</td>
+          </tr>
+          <tr>
+            <td><b>Agentic RAG &amp; tool loop</b></td>
+            <td class="lesson">Week 3 → 02 - Agentic RAG and function calling.md<br>03 - The agentic tool-call loop.md</td>
+            <td><code>llm.py</code> tool registrations: <code>search_chess_principles</code>, <code>inspect_critical_moments</code>, <code>inspect_position</code>, <code>build_training_drill</code></td>
+            <td><code>test_tools.py</code> uses PydanticAI TestModel to assert routing without network calls.</td>
+          </tr>
+          <tr>
+            <td><b>PydanticAI production agents</b></td>
+            <td class="lesson">Week 3 → 05 - Pydantic AI production-ready agents.md<br>06 - Pydantic AI seeing tool calls.md</td>
+            <td><code>llm.py:create_coach_agent</code>, <code>coach_tools.py</code> (5 adaptive tools) + 4 evidence tools in <code>llm.py</code></td>
+            <td>Nine total tools documented in <code>README.md</code>. Offline evaluation only in shipped product.</td>
+          </tr>
+          <tr>
+            <td><b>Vector search bonus</b></td>
+            <td class="lesson">Bonus → 07 - Vector Search with Qdrant.md</td>
+            <td><code>embeddings.py</code> (FastEmbed BAAI/bge-small-en-v1.5), <code>db_models.Vector384</code>, pgvector</td>
+            <td>Benchmarked but BM25 remains production default when hybrid misses latency/MRR gates.</td>
+          </tr>
+          <tr>
+            <td><b>Project structure</b></td>
+            <td class="lesson">Week 4 → 03 - Project Structure</td>
+            <td><code>backend/src/chess_coach_agent/</code>, <code>frontend/src/</code>, <code>docs/</code>, <code>scripts/</code></td>
+            <td>UA Batch 3 (API core) separated from Batch 2 (persistence/AI) and Batch 1 (React).</td>
+          </tr>
+          <tr>
+            <td><b>Testing agents</b></td>
+            <td class="lesson">Week 4 → 02 - First agent test.md<br>03 - Testing tool calls.md</td>
+            <td><code>backend/tests/test_tools.py</code>, <code>test_api.py</code>, <code>test_adaptive_api.py</code></td>
+            <td>12 test modules / 18 pytest cases in UA Batch 13; CI runs Pytest + Ruff + frontend build.</td>
+          </tr>
+          <tr>
+            <td><b>LLM judges</b></td>
+            <td class="lesson">Week 4 → 02 - Creating an LLM judge.md<br>03 - Using the agent and coming up with test cases.md</td>
+            <td><code>judge_evaluation.py</code>, <code>test_judge.py</code>, <code>critical_moments.jsonl</code></td>
+            <td>MiniMax via OpenRouter scores theme, grounding, coaching quality; prompt tuned from 5.0→5.5/6.</td>
+          </tr>
+          <tr>
+            <td><b>Monitoring &amp; Logfire</b></td>
+            <td class="lesson">Week 5 → 02 - Logfire integration with PydanticAI.md<br>04 - Tracking user feedback.md</td>
+            <td><code>monitoring.py</code>, <code>MonitoringDashboard.tsx</code>, <code>POST /api/feedback</code></td>
+            <td>JSONL works without credentials; Logfire optional. Feedback exports to eval candidates.</td>
+          </tr>
+          <tr>
+            <td><b>Offline evaluation</b></td>
+            <td class="lesson">Week 6 → 02 - Collecting evaluation data.md<br>04 - Evaluating AI responses.md</td>
+            <td><code>retrieval_evaluation.py</code>, <code>evaluation.py</code>, <code>docs/evaluation_results.md</code></td>
+            <td>Hand-crafted JSONL datasets; retrieval benchmark used to choose production strategy in code.</td>
+          </tr>
+          <tr>
+            <td><b>Capstone rubric</b></td>
+            <td class="lesson">Week 7 → 03 - Evaluation criteria.md<br>04 - Documentation.md</td>
+            <td><code>scripts/score_project.py</code> and <code>README.md</code></td>
+            <td>Self-scorer checks all rubric items; Render deployment satisfies cloud bonus.</td>
+          </tr>
+          <tr>
+            <td><b>Deployment bonus</b></td>
+            <td class="lesson">Bonus → 20 - Week 7 Deployment.md</td>
+            <td><code>render.yaml</code>, <code>Dockerfile</code>, <code>docker-compose.yml</code>, GitHub Actions CI</td>
+            <td>Single container serves FastAPI + built React + Stockfish; Postgres via Render blueprint.</td>
+          </tr>
+          <tr>
+            <td><b>OpenRouter alternative</b></td>
+            <td class="lesson">Bonus → 01 - Week 1 OpenAI Alternatives.md</td>
+            <td><code>llm.py</code> OpenRouter + MiniMax-M3</td>
+            <td>Deterministic fallbacks when <code>OPENROUTER_API_KEY</code> is absent; no public spend endpoints.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout" style="margin-top:22px"><b>Intentional divergence from course demos:</b> the capstone retired user-facing coach chat. The shipped loop matches Week 4 testing discipline — ground chess claims in tools and engine output, then use the LLM only where evaluation needs prose quality scoring.</div>
+    </section>
+
+    <section id="evaluation">
+      <div class="eyebrow">Evaluation &amp; monitoring</div>
+      <h2>Quality is measured, not assumed.</h2>
+      <div class="grid-2">
+        <div>
+          <h3>Retrieval benchmark (20 queries)</h3>
+          <table>
+            <thead><tr><th>Strategy</th><th>Hit@3</th><th>MRR</th><th>Median latency</th></tr></thead>
+            <tbody>
+              <tr><td>Title-only</td><td>0.35</td><td>0.35</td><td>0.084 ms</td></tr>
+              <tr><td><b>BM25 (production)</b></td><td><b>0.95</b></td><td><b>0.858</b></td><td><b>0.124 ms</b></td></tr>
+              <tr><td>Vector</td><td>0.95</td><td>0.725</td><td>0.338 ms</td></tr>
+              <tr><td>Hybrid RRF</td><td>1.00</td><td>0.850</td><td>0.671 ms (too slow)</td></tr>
+            </tbody>
+          </table>
+          <p class="small" style="margin-top:10px">Hybrid fails the coded latency guardrail (2× BM25). See <code>retrieval_results.json</code>.</p>
+        </div>
+        <div>
+          <h3>Deterministic + judge layers</h3>
+          <div class="review-list">
+            <div class="review-item"><span class="priority done">11/11</span><div><b>Theme detector fixtures</b><p>Loose pieces, king safety, opening drift, tactical collapses — <code>test_analysis.py</code></p></div></div>
+            <div class="review-item"><span class="priority done">9/9</span><div><b>PydanticAI tool routing</b><p><code>test_tools.py</code> asserts all nine tools and structured output shape.</p></div></div>
+            <div class="review-item"><span class="priority done">5.5/6</span><div><b>MiniMax judge after tuning</b><p>Grounded format beats concise 3.0/6; opening-drift case improved 4→6/6.</p></div></div>
+            <div class="review-item"><span class="priority done">CI</span><div><b>GitHub Actions</b><p>Pytest, Ruff, TypeScript build, Postgres service container.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="review">
+      <div class="eyebrow">Final code review</div>
+      <h2>Understand Anything + manual tracing findings.</h2>
+      <div class="grid-2">
+        <div>
+          <h3>Resolved during review</h3>
+          <div class="review-list">
+            <div class="review-item"><span class="priority done">Done</span><div><b>Removed public LLM/chat routes</b><p>No unauthenticated OpenRouter spend.</p></div></div>
+            <div class="review-item"><span class="priority done">Done</span><div><b>Single sync workflow</b><p>Deleted manual game-picker and preview import paths.</p></div></div>
+            <div class="review-item"><span class="priority done">Done</span><div><b>Pruned dead models</b><p>Kept PydanticAI agent for offline evaluation only.</p></div></div>
+          </div>
+        </div>
+        <div>
+          <h3>Next engineering work</h3>
+          <div class="review-list">
+            <div class="review-item"><span class="priority">P1</span><div><b>Paginate game library</b><p><code>GET /api/games/{platform}/{username}</code> returns ~46 MB for 2,775 games today.</p></div></div>
+            <div class="review-item"><span class="priority">P1</span><div><b>Resumable sync worker</b><p>Durable <code>SyncJobRow</code> vs in-process BackgroundTasks mismatch.</p></div></div>
+            <div class="review-item"><span class="priority p2">P2</span><div><b>Parallel Stockfish pool</b><p>Full history run ~16 min locally; reuse engines across games.</p></div></div>
+            <div class="review-item"><span class="priority p2">P2</span><div><b>Split hotspots</b><p><code>router.tsx</code>, <code>repositories.py</code>, <code>styles.css</code> are UA complexity clusters.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="product">
+      <div class="eyebrow">Shipped product</div>
+      <h2>Routes and screens.</h2>
+      <div class="grid-2" style="margin-bottom:18px">
+        <div>
+          <table>
+            <thead><tr><th>Route</th><th>Player question</th></tr></thead>
+            <tbody>
+              <tr><td><code>/</code></td><td>What should I do next?</td></tr>
+              <tr><td><code>/games</code></td><td>What is the evidence? Full-history sync + library.</td></tr>
+              <tr><td><code>/games/:id</code></td><td>What happened here? Board, moments, train-this-position.</td></tr>
+              <tr><td><code>/practice/:id</code></td><td>Can I solve it now? Graded board drill.</td></tr>
+              <tr><td><code>/progress</code></td><td>Am I improving? Rating and theme trends.</td></tr>
+              <tr><td><code>/quality</code></td><td>Does the system work? Monitoring dashboard.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Design principle</h3>
+          <p>Use AI to organize teaching experiments. Use chess evidence to decide what is true. Every drill comes from a real game, every answer can be graded, and every attempt changes what the player sees next.</p>
+        </div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><img src="presentation-assets/dashboard.png" alt="Player dashboard"><figcaption>Dashboard — weaknesses, due work, continue training</figcaption></figure>
+        <figure class="shot"><img src="presentation-assets/games.png" alt="Games library"><figcaption>Games — sync status and filterable library</figcaption></figure>
+        <figure class="shot"><img src="presentation-assets/practice.png" alt="Practice board"><figcaption>Practice — candidate moves and Stockfish grading</figcaption></figure>
+      </div>
+    </section>
+
+    <footer>
+      Generated from Understand Anything scan artifacts (<code>.understand-anything/intermediate/</code>) and Learn Agents notes (<code>~/Documents/random-notes/learn-agents/</code>). Open this file locally: <code>docs/chess-coach-presentation.html</code>.
+    </footer>
+  </main>
+
+  <script>
+    const links = [...document.querySelectorAll('nav a')];
+    const sections = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const id = '#' + entry.target.id;
+        links.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === id));
+      });
+    }, { rootMargin: '-40% 0px -50% 0px' });
+    sections.forEach((section) => observer.observe(section));
+  </script>
+</body>
+</html>

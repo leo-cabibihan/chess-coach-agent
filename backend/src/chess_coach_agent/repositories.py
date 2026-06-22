@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import UTC, datetime
 
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,7 @@ from .models import (
     GameMetadata,
     MoveRecord,
     CoachMessageView,
+    CoachSessionSummaryView,
     CoachSessionView,
     PlayerProfile,
     ProgressSummary,
@@ -130,6 +131,10 @@ def persist_analyses(
                     eval_swing=moment.eval_swing,
                     severity=moment.severity,
                     explanation={
+                        "judgment": moment.judgment,
+                        "win_probability_loss": moment.win_probability_loss,
+                        "move_accuracy": moment.move_accuracy,
+                        "trainable": moment.trainable,
                         "summary": moment.summary,
                         "what_happened": moment.what_happened,
                         "better_plan": moment.better_plan,
@@ -205,6 +210,12 @@ def load_analyses(session: Session, platform: str, username: str) -> AnalyzeResp
                         fen_after=item.fen_after,
                         eval_swing=item.eval_swing,
                         severity=item.severity,
+                        judgment=(item.explanation or {}).get("judgment", "inaccuracy"),
+                        win_probability_loss=(item.explanation or {}).get(
+                            "win_probability_loss", item.severity
+                        ),
+                        move_accuracy=(item.explanation or {}).get("move_accuracy", 0),
+                        trainable=(item.explanation or {}).get("trainable", False),
                         summary=(item.explanation or {}).get("summary", ""),
                         what_happened=(item.explanation or {}).get("what_happened", ""),
                         better_plan=(item.explanation or {}).get("better_plan", ""),
@@ -291,6 +302,9 @@ def add_message(
         trace_id=trace_id,
     )
     session.add(row)
+    coach_session = session.get(CoachSessionRow, session_id)
+    if coach_session:
+        coach_session.updated_at = datetime.now(UTC)
     session.flush()
     return row
 
@@ -332,8 +346,11 @@ def session_view(session: Session, session_id: str) -> CoachSessionView | None:
         )
         if event:
             from .models import CoachPanel
-            panel = TypeAdapter(CoachPanel).validate_python(event.payload)
-            break
+            try:
+                panel = TypeAdapter(CoachPanel).validate_python(event.payload)
+                break
+            except ValidationError:
+                continue
     return CoachSessionView(
         id=row.id,
         player=player_profile(session, player),
@@ -354,6 +371,52 @@ def session_view(session: Session, session_id: str) -> CoachSessionView | None:
         active_panel=panel,
         created_at=_aware(row.created_at),
     )
+
+
+def list_coach_sessions(
+    session: Session, platform: str, username: str, limit: int = 20
+) -> list[CoachSessionSummaryView]:
+    player = session.scalar(
+        select(PlayerRow).where(
+            PlayerRow.platform == platform,
+            PlayerRow.username_normalized == normalize_username(username),
+        )
+    )
+    if player is None:
+        return []
+    rows = session.scalars(
+        select(CoachSessionRow)
+        .where(CoachSessionRow.player_id == player.id)
+        .order_by(CoachSessionRow.updated_at.desc())
+        .limit(limit)
+    ).all()
+    summaries = []
+    for row in rows:
+        count = session.scalar(
+            select(func.count(MessageRow.id)).where(MessageRow.session_id == row.id)
+        ) or 0
+        if count == 0:
+            continue
+        latest = session.scalar(
+            select(MessageRow)
+            .where(
+                MessageRow.session_id == row.id,
+                MessageRow.role == "user",
+                MessageRow.content != "",
+            )
+            .order_by(MessageRow.sequence.desc())
+        )
+        summaries.append(
+            CoachSessionSummaryView(
+                id=row.id,
+                focus_theme=row.focus_theme,
+                message_count=count,
+                preview=(latest.content[:140] if latest else "Saved coaching session"),
+                created_at=_aware(row.created_at),
+                updated_at=_aware(row.updated_at),
+            )
+        )
+    return summaries
 
 
 def training_session_view(session: Session, plan_id: str) -> TrainingSessionView | None:

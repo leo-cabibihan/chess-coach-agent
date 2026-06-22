@@ -33,6 +33,10 @@ class CriticalMoment(BaseModel):
     eval_after: float | None = None
     eval_swing: float | None = None
     severity: float = 0
+    judgment: Literal["inaccuracy", "mistake", "blunder"]
+    win_probability_loss: float
+    move_accuracy: float
+    trainable: bool = False
     summary: str
     what_happened: str
     better_plan: str
@@ -96,32 +100,23 @@ class CoachingOutput(BaseModel):
     confidence: float = Field(ge=0, le=1)
 
 
-class ModelUsage(BaseModel):
-    model: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    total_tokens: int = 0
-    requests: int = 0
-    tool_calls: int = 0
-    estimated_cost_usd: float = 0
-
-
-class ChatResponse(BaseModel):
-    answer: str
-    used_llm: bool = False
-    retrieved_notes: list[str] = Field(default_factory=list)
-    coaching: CoachingOutput | None = None
-    tools_used: list[str] = Field(default_factory=list)
-    usage: ModelUsage | None = None
-    trace_id: str | None = None
-    panel: dict[str, Any] | None = None
-    message_history: list[dict[str, Any]] = Field(default_factory=list)
-
-
-class ImportRequest(BaseModel):
+class SyncGamesRequest(BaseModel):
     username: str
     platform: Literal["chess.com", "lichess"]
-    max_games: int = Field(default=20, ge=1, le=50)
+    max_games: int = Field(default=2000, ge=1, le=5000)
+
+
+class SyncJobView(BaseModel):
+    id: str
+    platform: str
+    username: str
+    status: Literal["queued", "fetching", "analyzing", "complete", "failed"]
+    total_games: int
+    analyzed_games: int
+    skipped_games: int
+    error: str = ""
+    created_at: datetime
+    updated_at: datetime
 
 
 class GamePreview(BaseModel):
@@ -141,12 +136,6 @@ class GamePreview(BaseModel):
     opponent_elo: int | None = None
 
 
-class GamePreviewResponse(BaseModel):
-    username: str
-    platform: Literal["chess.com", "lichess"]
-    games: list[GamePreview]
-
-
 class FeedbackRequest(BaseModel):
     moment_id: str
     game_id: str
@@ -154,20 +143,6 @@ class FeedbackRequest(BaseModel):
     theme: str
     fen: str
     comment: str = ""
-
-
-class TrendPoint(BaseModel):
-    label: str
-    games: int
-    score_pct: float
-    avg_elo: float | None = None
-
-
-class TrendSummary(BaseModel):
-    total_games: int
-    record: dict[str, int]
-    themes: dict[str, int]
-    recent: list[TrendPoint]
 
 
 Platform = Literal["chess.com", "lichess", "pgn"]
@@ -204,20 +179,6 @@ class QuizPanel(BaseModel):
     hint: str | None = None
 
 
-class FlashcardItem(BaseModel):
-    id: str
-    fen: str
-    prompt: str
-    answer: str
-    theme: str
-
-
-class FlashcardsPanel(BaseModel):
-    type: Literal["flashcards"] = "flashcards"
-    title: str
-    cards: list[FlashcardItem]
-
-
 class EvaluationPanel(BaseModel):
     type: Literal["evaluation"] = "evaluation"
     position_id: str
@@ -231,17 +192,8 @@ class EvaluationPanel(BaseModel):
     next_review_at: datetime
 
 
-class PlanPanel(BaseModel):
-    type: Literal["plan"] = "plan"
-    training_session_id: str
-    focus_themes: list[str]
-    difficulty: Difficulty
-    position_count: int
-    estimated_minutes: int
-
-
 CoachPanel = Annotated[
-    BoardPanel | QuizPanel | FlashcardsPanel | EvaluationPanel | PlanPanel,
+    BoardPanel | QuizPanel | EvaluationPanel,
     Field(discriminator="type"),
 ]
 
@@ -276,6 +228,15 @@ class CoachSessionView(BaseModel):
     created_at: datetime
 
 
+class CoachSessionSummaryView(BaseModel):
+    id: str
+    focus_theme: str
+    message_count: int
+    preview: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class CoachMessageAccepted(BaseModel):
     message_id: str
     session_id: str
@@ -285,6 +246,7 @@ class TrainingSessionCreate(BaseModel):
     platform: Platform = "chess.com"
     username: str = "kfctofu"
     theme: str | None = None
+    moment_id: str | None = None
     position_count: int = Field(default=5, ge=1, le=10)
 
 
