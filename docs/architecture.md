@@ -13,6 +13,8 @@ Durable full-history sync + PGN parser + Stockfish detectors
         v
 Direct practice selection from stored mistakes
         |
+        +--> PydanticAI agent ranks moments + writes quiz copy (fallback: deterministic templates)
+        |
         +--> typed board / quiz / evaluation panel
         |
         v
@@ -21,9 +23,10 @@ Stockfish move grading --> quiz attempt --> review schedule --> player memory
         +---------------- adaptive difficulty ------------------+
 ```
 
-Stockfish and deterministic legality checks are authoritative for chess claims. The user-facing
-workflow does not wait for an LLM: it selects stored mistakes, grades moves, and schedules review
-deterministically. PydanticAI and MiniMax remain isolated to agent and judge evaluation workflows.
+Stockfish and deterministic legality checks are authoritative for chess claims. Practice session
+creation runs through a PydanticAI agent when `OPENROUTER_API_KEY` is configured; it ranks stored
+moments and writes grounded quiz prompts, then falls back to deterministic selection and template
+copy when the key is absent or the agent fails. Move grading never waits on an LLM.
 
 ## Storage
 
@@ -72,6 +75,7 @@ state plus the offline analysis cache.
 | Method | Path | Role |
 | --- | --- | --- |
 | `GET` | `/api/health` | Liveness check for Render and local dev |
+| `GET` | `/api/llm/status` | Whether OpenRouter + PydanticAI practice path is configured |
 | `GET` | `/api/sample` | Bundled sample PGN for empty workspaces |
 | `POST` | `/api/analyze` | Paste/import PGN and persist analyses |
 | `POST` | `/api/feedback` | Helpful / not-helpful ratings on a moment |
@@ -85,5 +89,6 @@ state plus the offline analysis cache.
 | `POST` | `/api/training/sessions/{id}/attempts` | Grade a move and update review schedule |
 | `GET` | `/api/progress/{platform}/{username}` | Rating, theme accuracy, mastery, transfer trends |
 
-There is no public `/api/chat` or coach-session route in the shipped product. PydanticAI and the
-LLM judge run only through offline evaluation commands documented in the README.
+There is no public `/api/chat` or coach-session route in the shipped product. PydanticAI runs on
+`POST /api/training/sessions`; the LLM judge and agent scenario evaluation run through offline
+commands documented in the README.

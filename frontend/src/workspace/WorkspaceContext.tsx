@@ -1,9 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  analyzeGames,
   getAnalyzedGames,
   getGameSync,
-  getSample,
   sendMomentFeedback,
   startGameSync
 } from '../lib/api';
@@ -15,13 +13,10 @@ type StoredWorkspace = {
   analyses: CoachAnalysis[];
   activeGameId: string;
   player: string;
-  pgn: string;
   platform?: Platform;
 };
 
 type WorkspaceContextValue = {
-  pgn: string;
-  setPgn: (value: string) => void;
   player: string;
   setPlayer: (value: string) => void;
   platform: Platform;
@@ -34,8 +29,7 @@ type WorkspaceContextValue = {
   feedbackStatus: string;
   monitoringRefresh: number;
   openGame: (gameId: string) => void;
-  runAnalysis: () => Promise<CoachAnalysis | null>;
-  syncAllGames: () => Promise<CoachAnalysis | null>;
+  syncAllGames: (maxGames?: number) => Promise<CoachAnalysis | null>;
   recordFeedback: (moment: CriticalMoment, rating: 'helpful' | 'not_helpful') => Promise<void>;
   clearFeedbackStatus: () => void;
   restoreAnalyses: (items: CoachAnalysis[]) => void;
@@ -54,9 +48,8 @@ function loadStoredWorkspace(): StoredWorkspace | null {
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const stored = useMemo(loadStoredWorkspace, []);
-  const [pgn, setPgn] = useState(stored?.pgn || '');
   const [player, setPlayer] = useState(stored?.player || 'kfctofu');
-  const [platform, setPlatform] = useState<Platform>(stored?.platform || 'chess.com');
+  const [platform, setPlatform] = useState<Platform>(stored?.platform || 'lichess');
   const [analyses, setAnalyses] = useState<CoachAnalysis[]>(stored?.analyses || []);
   const [activeGameId, setActiveGameId] = useState(stored?.activeGameId || stored?.analyses[0]?.game.game_id || '');
   const [loading, setLoading] = useState(false);
@@ -66,57 +59,27 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [monitoringRefresh, setMonitoringRefresh] = useState(0);
 
   useEffect(() => {
-    if (pgn) return;
-    getSample().then((sample) => {
-      setPgn(sample.pgn);
-      setPlayer(sample.player);
-    }).catch(() => undefined);
-  }, [pgn]);
-
-  useEffect(() => {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        analyses: analyses.slice(0, 25), activeGameId, player, pgn, platform
+        analyses: analyses.slice(0, 25), activeGameId, player, platform
       }));
     } catch {
       // Server persistence remains authoritative when browser storage is full or unavailable.
     }
-  }, [activeGameId, analyses, pgn, platform, player]);
+  }, [activeGameId, analyses, platform, player]);
 
   function openGame(gameId: string) {
     setActiveGameId(gameId);
     setFeedbackStatus('');
   }
 
-  async function runAnalysis() {
-    setLoading(true);
-    setError('');
-    setStatus('Analyzing pasted PGN...');
-    try {
-      const result = await analyzeGames(pgn, player, 20, 'pgn');
-      setAnalyses(result.analyses);
-      const first = result.analyses[0] || null;
-      if (first) openGame(first.game.game_id);
-      const moments = result.analyses.reduce((sum, item) => sum + item.moments.length, 0);
-      setStatus(`Analyzed ${result.analyses.length} games with ${moments} coachable moments`);
-      setMonitoringRefresh((value) => value + 1);
-      return first;
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Analysis failed');
-      setStatus('Could not analyze PGN');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function syncAllGames() {
+  async function syncAllGames(maxGames = 5000) {
     if (!player.trim()) return null;
     setLoading(true);
     setError('');
     setStatus(`Starting ${platform} history sync for ${player}...`);
     try {
-      let job = await startGameSync(player, platform);
+      let job = await startGameSync(player, platform, maxGames);
       while (!['complete', 'failed'].includes(job.status)) {
         const completed = job.analyzed_games + job.skipped_games;
         setStatus(
@@ -159,11 +122,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={{
-      pgn, setPgn, player, setPlayer, platform, setPlatform,
+      player, setPlayer, platform, setPlatform,
       analyses, activeGameId, loading, status, error,
-      feedbackStatus, monitoringRefresh, openGame, runAnalysis, syncAllGames,
-      recordFeedback, clearFeedbackStatus: () => setFeedbackStatus('')
-      , restoreAnalyses: (items) => {
+      feedbackStatus, monitoringRefresh, openGame, syncAllGames,
+      recordFeedback, clearFeedbackStatus: () => setFeedbackStatus(''),
+      restoreAnalyses: (items) => {
         setAnalyses(items);
         setStatus(`${items.length} games ready`);
         if (items.length && !activeGameId) setActiveGameId(items[0].game.game_id);

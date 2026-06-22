@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from sqlalchemy import select
 
@@ -34,11 +35,36 @@ from .repositories import (
     progress_summary,
     training_session_view,
 )
-from .training import build_training_session, evaluate_attempt
+from .practice_agent import run_practice_agent
+from .training import evaluate_attempt
 
 
 router = APIRouter(prefix="/api")
 coach_agent = ChessCoachAgent()
+
+
+def _sync_failure_message(exc: Exception) -> str:
+    if isinstance(exc, httpx.HTTPStatusError):
+        url = str(exc.request.url)
+        status = exc.response.status_code
+        if status == 403 and "chess.com" in url:
+            return (
+                "Chess.com returned 403 Forbidden. Add CHESSCOM_API_CONTACT to backend/.env "
+                "(email or Chess.com username), use the lowercase handle, and retry. "
+                "If you are on a cloud host (Render, etc.), Chess.com often blocks datacenter IPs — "
+                "sync locally or use Lichess instead."
+            )
+        if status in {301, 308} and "chess.com" in url:
+            return (
+                "Chess.com redirected the username lookup. Enter the lowercase Chess.com handle "
+                "(for example magnuscarlsen, not MagnusCarlsen)."
+            )
+        if status == 404 and "chess.com" in url:
+            return "Chess.com could not find that username. Check spelling and capitalization."
+        if status == 404 and "lichess.org" in url:
+            return "Lichess could not find that username. Check spelling."
+        return f"Game provider request failed ({status}) for {url}"
+    return str(exc)
 
 
 def _sync_job_view(row: SyncJobRow) -> SyncJobView:
@@ -123,12 +149,13 @@ async def _process_sync_job(job_id: str, request: SyncGamesRequest) -> None:
             {"job_id": job_id, "platform": request.platform, "username": request.username},
         )
     except Exception as exc:
+        message = _sync_failure_message(exc)
         with session_scope() as session:
             job = session.get(SyncJobRow, job_id)
             if job:
                 job.status = "failed"
-                job.error = str(exc)
-        log_event("games_sync_failed", {"job_id": job_id, "error": str(exc)})
+                job.error = message
+        log_event("games_sync_failed", {"job_id": job_id, "error": message})
 
 
 @router.post("/games/sync", response_model=SyncJobView)
@@ -182,9 +209,9 @@ def get_player(platform: str, username: str) -> PlayerProfile:
 
 
 @router.post("/training/sessions", response_model=TrainingSessionView)
-def create_training_session(request: TrainingSessionCreate) -> TrainingSessionView:
+async def create_training_session(request: TrainingSessionCreate) -> TrainingSessionView:
     with session_scope() as session:
-        plan = build_training_session(
+        result = await run_practice_agent(
             session,
             request.platform,
             request.username,
@@ -192,12 +219,26 @@ def create_training_session(request: TrainingSessionCreate) -> TrainingSessionVi
             request.position_count,
             request.moment_id,
         )
-        view = training_session_view(session, plan.id)
+        view = training_session_view(session, result.plan.id)
         if view is None:
             raise HTTPException(500, "Training session could not be created")
         log_event(
             "training_session_created",
-            {"training_session_id": plan.id, "positions": len(view.positions), "difficulty": plan.difficulty},
+            {
+                "training_session_id": result.plan.id,
+                "positions": len(view.positions),
+                "difficulty": result.plan.difficulty,
+            },
+        )
+        log_event(
+            "practice_agent_completed",
+            {
+                "training_session_id": result.plan.id,
+                "used_llm": result.used_llm,
+                "fallback": result.fallback,
+                "tools_used": result.tools_used,
+                "duration_ms": result.duration_ms,
+            },
         )
         return view
 

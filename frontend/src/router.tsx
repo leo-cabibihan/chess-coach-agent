@@ -82,11 +82,6 @@ function PageHeader({ eyebrow, title, detail, actions }: {
 function GameIntake({ onAnalyzed }: { onAnalyzed: (analysis: CoachAnalysis) => void }) {
   const workspace = useWorkspace();
 
-  async function analyze() {
-    const first = await workspace.runAnalysis();
-    if (first) onAnalyzed(first);
-  }
-
   async function syncAll() {
     const first = await workspace.syncAllGames();
     if (first) onAnalyzed(first);
@@ -94,49 +89,47 @@ function GameIntake({ onAnalyzed }: { onAnalyzed: (analysis: CoachAnalysis) => v
 
   return (
     <section className="game-intake">
-      <section className="intake-workspace">
+      <section className="intake-workspace intake-workspace-single">
         <div className="intake-section online-import">
           <div className="section-heading">
             <Database size={18} />
-            <div><strong>Player history</strong><span>Automatically sync new Chess.com or Lichess games</span></div>
+            <div><strong>Player account</strong><span>Sync your Chess.com or Lichess game history</span></div>
           </div>
           <div className="intake-fields">
             <label>
               Player username
-              <input value={workspace.player} onChange={(event) => workspace.setPlayer(event.target.value)} />
+              <input
+                aria-label="Player username"
+                data-testid="player-username"
+                value={workspace.player}
+                onChange={(event) => workspace.setPlayer(event.target.value)}
+              />
             </label>
             <label>
               Source
-              <select value={workspace.platform} onChange={(event) => workspace.setPlatform(event.target.value as Platform)}>
-                <option value="chess.com">Chess.com</option>
+              <select
+                aria-label="Source"
+                data-testid="player-platform"
+                value={workspace.platform}
+                onChange={(event) => workspace.setPlatform(event.target.value as Platform)}
+              >
                 <option value="lichess">Lichess</option>
+                <option value="chess.com">Chess.com</option>
               </select>
             </label>
           </div>
-          <button className="primary" onClick={syncAll} disabled={workspace.loading || !workspace.player.trim()}>
+          <button
+            className="primary"
+            data-testid="sync-history-btn"
+            onClick={syncAll}
+            disabled={workspace.loading || !workspace.player.trim()}
+          >
             {workspace.loading ? <Loader2 className="spin" size={17} /> : <Database size={17} />}
             Sync full history
           </button>
         </div>
-
-        <div className="intake-divider"><span>or</span></div>
-
-        <div className="intake-section pgn-import">
-          <div className="section-heading">
-            <Upload size={18} />
-            <div><strong>PGN review</strong><span>Paste one or more games</span></div>
-          </div>
-          <label>
-            PGN
-            <textarea value={workspace.pgn} onChange={(event) => workspace.setPgn(event.target.value)} rows={9} />
-          </label>
-          <button className="secondary" onClick={analyze} disabled={workspace.loading || !workspace.pgn.trim()}>
-            {workspace.loading ? <Loader2 className="spin" size={17} /> : <Upload size={17} />}
-            Analyze pasted PGN
-          </button>
-        </div>
       </section>
-      <div className={workspace.error ? 'route-status error' : 'route-status'}>
+      <div className={workspace.error ? 'route-status error' : 'route-status'} data-testid="workspace-status">
         {workspace.error ? <AlertCircle size={16} /> : <Activity size={16} />}
         {workspace.error || workspace.status}
       </div>
@@ -337,7 +330,9 @@ const analyzeRoute = createRoute({
 const gamesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/games',
-  validateSearch: (search: Record<string, unknown>) => ({ import: search.import === true }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    import: search.import === true || search.import === 'true'
+  }),
   component: GamesPage
 });
 const gameRoute = createRoute({

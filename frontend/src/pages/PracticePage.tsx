@@ -71,7 +71,7 @@ export function PracticePage({ sessionId }: { sessionId?: string }) {
       <Target size={30} />
       <h2>Your next five positions</h2>
       <p>The queue prioritizes mistakes and blunders from your analyzed history.</p>
-      <button className="primary" disabled={busy} onClick={start}>{busy ? <Loader2 className="spin" size={17} /> : <ArrowRight size={17} />} Start practice</button>
+      <button className="primary" data-testid="start-practice-btn" disabled={busy} onClick={start}>{busy ? <><Loader2 className="spin" size={17} /> Preparing your session…</> : <><ArrowRight size={17} /> Start practice</>}</button>
     </section>
   </main>;
 
@@ -91,10 +91,10 @@ export function PracticePage({ sessionId }: { sessionId?: string }) {
           <button className="secondary" onClick={() => setEvaluation(null)}><RotateCcw size={16} /> Try again</button>
         </> : <>
           <span className="page-eyebrow">Your move</span>
-          <h2>What would you play?</h2>
+          <h2 data-testid="practice-prompt">{position.prompt || 'What would you play?'}</h2>
           {position.choices.length ? <div className="move-choices">{position.choices.map((choice) => <button disabled={busy} key={choice} onClick={() => submit(choice)}>{choice}</button>)}</div> : <div className="move-entry"><input value={move} onChange={(event) => setMove(event.target.value)} placeholder="Enter SAN or UCI" /><button className="primary" disabled={!move || busy} onClick={() => submit(move)}>Submit</button></div>}
-          {position.difficulty === 'beginner' && <button className="text-action" onClick={() => setHintOpen(true)}>Show hint</button>}
-          {hintOpen && <p className="quiz-hint">Start with checks and captures, then inspect every loose piece.</p>}
+          {position.hint && position.difficulty === 'beginner' && !hintOpen && <button className="text-action" onClick={() => setHintOpen(true)}>Show hint</button>}
+          {hintOpen && position.hint && <p className="quiz-hint">{position.hint}</p>}
         </>}
       </div>
     </section>

@@ -1,35 +1,66 @@
 from __future__ import annotations
 
+import asyncio
 import io
+import os
 
 import chess.pgn
 import httpx
 
 from .models import GamePreview
 from .pgn import parse_pgn_text
+from .repositories import normalize_username
+
+CHESSCOM_API_BASE = "https://api.chess.com/pub/player"
+LICHESS_GAMES_URL = "https://lichess.org/api/games/user"
+
+
+def chesscom_user_agent() -> str:
+    contact = os.getenv("CHESSCOM_API_CONTACT", "chess-coach-agent@users.noreply.github.com")
+    return f"chess-coach-agent/0.2 (contact: {contact})"
+
+
+def lichess_user_agent() -> str:
+    contact = os.getenv("LICHESS_API_CONTACT", "chess-coach-agent@users.noreply.github.com")
+    return f"chess-coach-agent/0.2 (contact: {contact})"
+
+
+def _http_client(headers: dict[str, str], timeout: float) -> httpx.AsyncClient:
+    return httpx.AsyncClient(timeout=timeout, headers=headers, follow_redirects=True)
 
 
 async def fetch_chesscom_pgn(username: str, max_games: int = 20) -> str:
-    headers = {"User-Agent": "chess-coach-agent/0.1 educational capstone"}
-    async with httpx.AsyncClient(timeout=30, headers=headers) as client:
-        archives = await client.get(f"https://api.chess.com/pub/player/{username}/games/archives")
+    handle = normalize_username(username)
+    headers = {"User-Agent": chesscom_user_agent()}
+    async with _http_client(headers, timeout=30) as client:
+        archives = await client.get(f"{CHESSCOM_API_BASE}/{handle}/games/archives")
         archives.raise_for_status()
         urls = archives.json().get("archives", [])
+        if not urls:
+            return ""
         chunks: list[str] = []
         for url in reversed(urls):
-            pgn_url = url + "/pgn"
-            response = await client.get(pgn_url)
+            response = await client.get(f"{url}/pgn")
             response.raise_for_status()
             chunks.append(response.text)
             if sum(chunk.count("[Event ") for chunk in chunks) >= max_games:
                 break
+            # Chess.com asks clients not to hammer archive endpoints.
+            await asyncio.sleep(0.15)
     return "\n\n".join(chunks)
 
 
 async def fetch_lichess_pgn(username: str, max_games: int = 20) -> str:
-    headers = {"Accept": "application/x-chess-pgn", "User-Agent": "chess-coach-agent/0.1 educational capstone"}
-    url = f"https://lichess.org/api/games/user/{username}?max={max_games}&pgnInJson=false&clocks=true&evals=false"
-    async with httpx.AsyncClient(timeout=45, headers=headers) as client:
+    handle = normalize_username(username)
+    headers = {
+        "Accept": "application/x-chess-pgn",
+        "User-Agent": lichess_user_agent(),
+    }
+    url = (
+        f"{LICHESS_GAMES_URL}/{handle}"
+        f"?max={max_games}&pgnInJson=false&clocks=true&evals=false"
+    )
+    async with _http_client(headers, timeout=45) as client:
         response = await client.get(url)
         response.raise_for_status()
         return response.text

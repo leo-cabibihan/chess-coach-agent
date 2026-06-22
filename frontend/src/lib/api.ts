@@ -9,27 +9,6 @@ import type {
   SyncJob
 } from './types';
 
-export async function getSample(): Promise<{ player: string; pgn: string }> {
-  const response = await fetch('/api/sample');
-  if (!response.ok) throw new Error('Could not load sample PGN');
-  return response.json();
-}
-
-export async function analyzeGames(
-  pgn: string,
-  player: string,
-  maxGames: number,
-  platform: Platform | 'pgn' = 'pgn'
-): Promise<AnalyzeResponse> {
-  const response = await fetch('/api/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pgn, player, max_games: maxGames, platform })
-  });
-  if (!response.ok) throw new Error('Analysis failed');
-  return response.json();
-}
-
 export async function sendMomentFeedback(
   moment: CriticalMoment,
   rating: 'helpful' | 'not_helpful',
@@ -114,14 +93,18 @@ export async function getAnalyzedGames(
 
 export async function startGameSync(
   username: string,
-  platform: Platform
+  platform: Platform,
+  maxGames = 5000
 ): Promise<SyncJob> {
   const response = await fetch('/api/games/sync', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, platform, max_games: 5000 })
+    body: JSON.stringify({ username, platform, max_games: maxGames })
   });
-  if (!response.ok) throw new Error(`Could not sync games from ${platform}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Could not start sync (${response.status}): ${body || response.statusText}`);
+  }
   return response.json();
 }
 

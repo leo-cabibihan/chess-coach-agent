@@ -41,9 +41,10 @@ PydanticAI remain available for offline evaluation, not the live practice loop.
 - Resurface failed positions after 1 day, hinted successes after 3, and clean successes after 7,
   doubling successful review intervals up to 30 days.
 - Attach curated lesson snippets to each analysis through BM25 retrieval; recompute player weakness memory from imports, moments, and quiz attempts without embedding raw PGNs or FENs.
-- Let MiniMax call nine PydanticAI tools while Stockfish remains authoritative for chess decisions.
+- Run a PydanticAI agent with twelve documented tools when practice sessions are created; rank stored
+  mistakes, write grounded quiz copy, and fall back to deterministic templates without an API key.
 - Validate every coaching answer as structured Pydantic output with evidence and confidence.
-- Trace offline agent and judge runs with Logfire and display quality and feedback metrics.
+- Trace live practice-agent runs with Logfire and display quality, agent fallback, and feedback metrics.
 - Show the analysis in a React frontend with a board and move history.
 
 ## Routed Frontend
@@ -70,13 +71,17 @@ the current import and viewed analyses. See `docs/architecture.md` for the data 
 - **Knowledge base and retrieval:** 20 hand-authored queries compare title, BM25, vector, and hybrid
   RRF retrieval on hit rate, MRR, source correctness, and latency. The benchmark keeps BM25 as the
   production default until hybrid clears every quality and latency gate.
-- **Agents and LLM:** a PydanticAI agent calls nine documented chess tools through OpenRouter/MiniMax.
+- **Agents and LLM:** a PydanticAI agent with twelve documented tools runs when practice sessions are
+  created; it ranks stored moments and writes quiz copy, with deterministic fallback when no API key
+  is configured. Stockfish still grades every move attempt.
 - **Code organization:** backend is a Python package under `backend/src`; frontend is a Vite React app.
-- **Testing:** 12 test modules / 18 pytest cases cover registered tool order, legal move grading, adaptive difficulty,
-  durable training flows and move grading; judge tests run without network credentials.
-- **Evaluation:** deterministic detectors run against 11 varied fixtures; MiniMax judge evaluation compares prompt formats.
-- **Monitoring:** Logfire traces offline PydanticAI evaluation while the Quality page displays
-  local analysis, retrieval, practice, hint, and feedback metrics.
+- **Testing:** 13 test modules / 22 pytest cases cover registered tool order, agent evaluation fixtures,
+  legal move grading, adaptive difficulty, durable training flows, and judge tests without network
+  credentials.
+- **Evaluation:** four layers — deterministic theme detection, retrieval benchmark, analysis-copy judge,
+  and agent scenario evaluation with structured `JudgeFeedback`.
+- **Monitoring:** Logfire traces live PydanticAI practice-agent runs; the Quality page displays local
+  analysis, retrieval, practice-agent fallback rate, hint use, and feedback metrics.
 - **Reproducibility:** sample PGN data is included; setup commands are below.
 - **Bonus:** React UI, Docker, docker-compose, Makefile, uv dependency workflow, and GitHub Actions CI are included.
 
@@ -136,25 +141,33 @@ restarts or redeploys. For persistent monitoring, attach a paid disk at `/var/da
 
 ## OpenRouter
 
-The user-facing product works without a model key. OpenRouter is retained for the capstone's
-documented PydanticAI tool-routing and LLM-judge evaluation workflows:
+Copy env vars into `backend/.env` (the API loads `.env` from `backend/`, repo root, or cwd):
+
+```bash
+bash scripts/setup_llm.sh          # create backend/.env if missing
+bash scripts/setup_llm.sh --verify # ping OpenRouter + agent smoke check
+```
+
+Or manually:
 
 ```bash
 export OPENROUTER_API_KEY=...
 export OPENROUTER_MODEL=minimax/minimax-m3
 ```
 
-The model is used in reproducible tool-routing tests and optional LLM-judge evaluation. The nine
-real tools are
-`search_chess_principles`, `inspect_critical_moments`, `inspect_position`, `build_training_drill`,
-`inspect_game`, `compare_moves`, `generate_position_quiz`, `evaluate_candidate_move`, and
-`build_training_session`. Chess-critical logic remains grounded in
-PGN parsing, legal move generation, Stockfish, stored player evidence, and cited lessons.
+`GET /api/llm/status` reports whether the practice agent will use PydanticAI or deterministic fallback.
 
-The interactive chatbot was intentionally removed because it added latency without improving the
-core learning loop. Exact game IDs, FENs, moves, and engine scores remain relational; BM25/vector
-retrieval and PydanticAI remain available for reproducible agent evaluation rather than blocking
-ordinary game review or practice.
+You can override the default with any OpenRouter model, for example `minimax/minimax-m3`. The twelve
+documented tools are
+`search_chess_principles`, `inspect_critical_moments`, `inspect_player_moments`, `inspect_position`,
+`build_training_drill`, `inspect_game`, `compare_moves`, `rank_practice_moments`,
+`generate_position_quiz`, `evaluate_candidate_move`, `build_training_session`, and `write_quiz_copy`.
+Chess-critical logic remains grounded in PGN parsing, legal move generation, Stockfish, stored player
+evidence, and cited lessons.
+
+There is no user-facing chat UI. The practice page is the agent surface: starting a session invokes
+the tool loop to rank stored mistakes and write grounded quiz prompts. BM25/vector retrieval and the
+LLM judge remain available for reproducible offline evaluation.
 
 Critical moments are not quota-filled. Stockfish evaluations are converted to winning chances, then
 losses of 0.10, 0.20, and 0.30 are labeled inaccuracy, mistake, and blunder. Mistakes and blunders
@@ -178,6 +191,15 @@ still runs for reviewers.
 
 ## Evaluation
 
+Evaluation runs in four layers:
+
+| Layer | Module | Question |
+| --- | --- | --- |
+| Foundation | `evaluation.py` | Did Stockfish/heuristics detect the right theme? |
+| Retrieval | `retrieval_evaluation.py` | Which search strategy should production use? |
+| Analysis copy | `judge_evaluation.py` | Is deterministic explanation prose grounded and coach-like? |
+| Agent | `agent_evaluation.py` | Does the PydanticAI agent route tools and answer correctly? |
+
 Run deterministic theme evaluation and the 20-query retrieval benchmark:
 
 ```bash
@@ -186,22 +208,30 @@ uv run python -m chess_coach_agent.evaluation --dataset data/eval/critical_momen
 uv run python -m chess_coach_agent.retrieval_evaluation --dataset data/eval/retrieval.jsonl --output data/eval/retrieval_results.json
 ```
 
-Run the live MiniMax judge and compare the concise and grounded formats:
+Run the analysis-copy judge and compare concise vs grounded formats:
 
 ```bash
 cd backend
 uv run python -m chess_coach_agent.judge_evaluation --dataset data/eval/critical_moments.jsonl --tune
 ```
 
-The live judge requires `OPENROUTER_API_KEY`. The regular test suite uses a controlled fake judge,
-so CI stays deterministic. Measured results and the resulting prompt change are in
-`docs/evaluation_results.md`; manual reviews are in `docs/manual_evaluation.md`.
+Run the offline agent scenario suite (TestModel routing + heuristic judge; no network required):
+
+```bash
+cd backend
+uv run python -m chess_coach_agent.agent_evaluation --dataset data/eval/agent_scenarios.jsonl
+uv run pytest tests/test_agent_eval.py tests/test_tools.py -q
+```
+
+Add `--live` to `agent_evaluation` when you want OpenRouter to score real agent runs. The regular
+test suite uses a controlled fake judge and TestModel routing, so CI stays deterministic. Measured
+results are in `docs/evaluation_results.md`; manual reviews are in `docs/manual_evaluation.md`.
 
 ## Monitoring and Feedback
 
-The `/quality` dashboard reads `GET /api/monitoring` and displays analyses, retrieval, practice,
-hint use, evaluation runs, and feedback. Set `LOGFIRE_TOKEN` to send offline PydanticAI evaluation
-to Logfire. Without a token, local JSONL monitoring remains active.
+The `/quality` dashboard reads `GET /api/monitoring` and displays analyses, retrieval, practice-agent
+runs, fallback rate, hint use, evaluation runs, and feedback. Set `LOGFIRE_TOKEN` to send live
+PydanticAI practice-agent traces to Logfire. Without a token, local JSONL monitoring remains active.
 Helpful/not-helpful buttons on each critical moment write feedback events. Export those events with:
 
 ```bash

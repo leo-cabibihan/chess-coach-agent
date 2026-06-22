@@ -169,6 +169,8 @@ class TrainingPositionRow(Base):
     theme: Mapped[str] = mapped_column(String(40), index=True)
     difficulty: Mapped[str] = mapped_column(String(20))
     explanation: Mapped[str] = mapped_column(Text, default="")
+    prompt: Mapped[str] = mapped_column(Text, default="What would you play in this position?")
+    hint: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class QuizAttemptRow(Base):

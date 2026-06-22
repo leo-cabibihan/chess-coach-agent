@@ -442,6 +442,8 @@ def training_session_view(session: Session, plan_id: str) -> TrainingSessionView
                 choices=item.choices,
                 theme=item.theme,
                 difficulty=item.difficulty,  # type: ignore[arg-type]
+                prompt=item.prompt or "What would you play in this position?",
+                hint=item.hint,
             )
             for item in positions
         ],

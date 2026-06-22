@@ -99,6 +99,7 @@ type TrainingPosition = {
   theme: string;
   difficulty: Difficulty;
   prompt: string;
+  hint: string | null;
 };
 
 export type TrainingSession = {
@@ -153,5 +154,7 @@ export type MonitoringSummary = {
   hint_use_rate: number | null;
   retrieval_methods: Record<string, number>;
   memory_retrievals: number;
+  practice_agent_runs: number;
+  practice_agent_fallback_rate: number | null;
   recent_events: Array<Record<string, unknown>>;
 };

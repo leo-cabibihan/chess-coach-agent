@@ -48,7 +48,15 @@ def monitoring_summary() -> dict[str, Any]:
     llm_chats = [event for event in chats if event.get("used_llm")]
     helpful = sum(event.get("rating") == "helpful" for event in feedback)
     themes = Counter(event.get("theme") for event in feedback if event.get("theme"))
+    practice_agent_runs = [
+        event for event in events if event.get("event_type") == "practice_agent_completed"
+    ]
+    practice_fallbacks = sum(bool(event.get("fallback")) for event in practice_agent_runs)
+    practice_tools = Counter(
+        tool for event in practice_agent_runs for tool in event.get("tools_used", [])
+    )
     tool_usage = Counter(tool for event in chats for tool in event.get("tools_used", []))
+    tool_usage.update(practice_tools)
     input_tokens = sum((event.get("usage") or {}).get("input_tokens", 0) for event in chats)
     output_tokens = sum((event.get("usage") or {}).get("output_tokens", 0) for event in chats)
     estimated_cost = sum((event.get("usage") or {}).get("estimated_cost_usd", 0) for event in chats)
@@ -87,6 +95,12 @@ def monitoring_summary() -> dict[str, Any]:
         "hint_use_rate": round(hinted_attempts / len(attempts), 3) if attempts else None,
         "retrieval_methods": dict(retrieval_methods),
         "memory_retrievals": len(memory_retrievals),
+        "practice_agent_runs": len(practice_agent_runs),
+        "practice_agent_fallback_rate": round(
+            practice_fallbacks / len(practice_agent_runs), 3
+        )
+        if practice_agent_runs
+        else None,
         "recent_events": list(reversed(events[-8:])),
     }
 
