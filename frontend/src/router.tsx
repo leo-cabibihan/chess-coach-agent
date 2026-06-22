@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Link,
   Outlet,
   createRootRoute,
   createRoute,
-  createRouter,
-  redirect
+  createRouter
 } from '@tanstack/react-router';
 import {
   Activity,
@@ -17,10 +17,12 @@ import {
   Library,
   Loader2,
   MessageCircle,
+  Dumbbell,
+  Home,
+  TrendingUp,
   Search,
   Upload
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import { AnalysisPanel } from './components/AnalysisPanel';
 import { GameList } from './components/GameList';
 import { GamePicker } from './components/GamePicker';
@@ -28,19 +30,23 @@ import { GamePanel } from './components/GamePanel';
 import { MonitoringDashboard } from './components/MonitoringDashboard';
 import type { CoachAnalysis, CriticalMoment, Platform } from './lib/types';
 import { useWorkspace } from './workspace/WorkspaceContext';
+import { HomePage } from './pages/HomePage';
+import { CoachWorkspacePage } from './pages/CoachWorkspacePage';
+import { ProgressPage } from './pages/ProgressPage';
+import { createCoachSession, getAnalyzedGames, sendCoachMessage } from './lib/api';
 
 function AppShell() {
   const { analyses } = useWorkspace();
   return (
     <div className="app-frame">
       <aside className="app-sidebar">
-        <Link className="brand" to="/analyze">
+        <Link className="brand" to="/">
           <Activity size={19} />
           <span>Chess Coach</span>
         </Link>
         <nav aria-label="Primary navigation">
-          <Link to="/analyze" activeProps={{ className: 'active' }}>
-            <Search size={18} /><span>Analyze</span>
+          <Link to="/" activeProps={{ className: 'active' }} activeOptions={{ exact: true }}>
+            <Home size={18} /><span>Home</span>
           </Link>
           <Link to="/games" activeProps={{ className: 'active' }}>
             <Library size={18} /><span>Games</span>
@@ -48,6 +54,9 @@ function AppShell() {
           </Link>
           <Link to="/coach" activeProps={{ className: 'active' }}>
             <MessageCircle size={18} /><span>Coach</span>
+          </Link>
+          <Link to="/progress" activeProps={{ className: 'active' }}>
+            <TrendingUp size={18} /><span>Progress</span>
           </Link>
           <Link to="/quality" activeProps={{ className: 'active' }}>
             <BarChart3 size={18} /><span>Quality</span>
@@ -170,8 +179,19 @@ function AnalyzePage() {
 }
 
 function GamesPage() {
-  const { analyses, activeGameId, openGame } = useWorkspace();
+  const workspace = useWorkspace();
+  const { analyses, activeGameId, openGame } = workspace;
   const navigate = gamesRoute.useNavigate();
+  const persisted = useQuery({
+    queryKey: ['analyzed-games', workspace.platform, workspace.player],
+    queryFn: () => getAnalyzedGames(workspace.player, workspace.platform),
+    enabled: analyses.length === 0
+  });
+  useEffect(() => {
+    if (!analyses.length && persisted.data?.analyses.length) {
+      workspace.restoreAnalyses(persisted.data.analyses);
+    }
+  }, [analyses.length, persisted.data]);
   const activeIndex = Math.max(0, analyses.findIndex((item) => item.game.game_id === activeGameId));
 
   function selectGame(index: number) {
@@ -220,6 +240,7 @@ function GameReviewPage() {
   const analysis = workspace.analyses.find((item) => item.game.game_id === gameId) || null;
   const selectedMoment = analysis?.moments.find((moment) => moment.id === search.moment) || analysis?.moments[0] || null;
   const [currentPly, setCurrentPly] = useState(selectedMoment?.ply || 0);
+  const [startingCoach, setStartingCoach] = useState(false);
 
   useEffect(() => {
     if (analysis) workspace.openGame(analysis.game.game_id);
@@ -234,6 +255,25 @@ function GameReviewPage() {
     setCurrentPly(moment.ply);
     workspace.clearFeedbackStatus();
     void navigate({ search: { moment: moment.id }, replace: true });
+  }
+
+  async function openCoach(practice: boolean) {
+    if (!analysis || !selectedMoment) return;
+    setStartingCoach(true);
+    try {
+      const created = await createCoachSession(
+        workspace.player,
+        workspace.platform,
+        selectedMoment.theme
+      );
+      const request = practice
+        ? `Create a practice quiz from game ${analysis.game.game_id}, especially move ${selectedMoment.move_number}.`
+        : `Help me understand game ${analysis.game.game_id}, especially move ${selectedMoment.move_number} where I played ${selectedMoment.played_san}.`;
+      await sendCoachMessage(created.id, request);
+      await navigate({ to: '/coach/$sessionId', params: { sessionId: created.id } });
+    } finally {
+      setStartingCoach(false);
+    }
   }
 
   if (!analysis) {
@@ -254,7 +294,15 @@ function GameReviewPage() {
       <PageHeader
         eyebrow={`${analysis.game.date} · ${analysis.game.player_result}`}
         title={`${analysis.game.white} vs ${analysis.game.black}`}
-        actions={<Link className="secondary route-action" to="/games"><Library size={16} /> All games</Link>}
+        actions={<>
+          <button className="secondary route-action" disabled={startingCoach} onClick={() => openCoach(false)}>
+            <MessageCircle size={16} /> Ask coach
+          </button>
+          <button className="secondary route-action" disabled={startingCoach} onClick={() => openCoach(true)}>
+            <Dumbbell size={16} /> Add to practice
+          </button>
+          <Link className="secondary route-action" to="/games"><Library size={16} /> All games</Link>
+        </>}
       />
       <div className="stat-row">{gameStats(analysis).map((stat) => <span key={stat}>{stat}</span>)}</div>
       <div className="layout review-layout">
@@ -276,79 +324,9 @@ function GameReviewPage() {
   );
 }
 
-function CoachPage() {
-  const workspace = useWorkspace();
-  const [question, setQuestion] = useState('');
-  return (
-    <main className="route-page coach-page">
-      <PageHeader
-        eyebrow="MiniMax coach"
-        title="Ask about your game"
-        detail={workspace.activeAnalysis
-          ? `${workspace.activeAnalysis.game.white} vs ${workspace.activeAnalysis.game.black}`
-          : 'Analyze a game to ground the conversation.'}
-      />
-      <section className="coach-workspace">
-        <label>
-          Game context
-          <select
-            value={workspace.activeAnalysis?.game.game_id || ''}
-            onChange={(event) => workspace.openGame(event.target.value)}
-            disabled={!workspace.analyses.length}
-          >
-            {!workspace.analyses.length && <option value="">No analyzed games</option>}
-            {workspace.analyses.map((item) => (
-              <option value={item.game.game_id} key={item.game.game_id}>
-                {item.game.white} vs {item.game.black} · {item.game.date}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="coach-prompt-row">
-          <textarea
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask why a tactic works, what to drill, or how to avoid a recurring pattern"
-            rows={4}
-          />
-          <button className="primary" onClick={() => workspace.ask(question)} disabled={workspace.loading || !question.trim()}>
-            {workspace.loading ? <Loader2 className="spin" size={16} /> : <MessageCircle size={16} />}
-            Ask coach
-          </button>
-        </div>
-        {workspace.coachAnswer ? (
-          <div className="coach-answer routed-answer">
-            <ReactMarkdown>{workspace.coachAnswer}</ReactMarkdown>
-            {workspace.coachResponse?.coaching && (
-              <div className="coach-structured">
-                <div>
-                  <span>Principle</span>
-                  <strong>{workspace.coachResponse.coaching.principle}</strong>
-                </div>
-                <div>
-                  <span>Practice drill</span>
-                  <strong>{workspace.coachResponse.coaching.drill}</strong>
-                </div>
-                {workspace.coachResponse.coaching.evidence.length > 0 && (
-                  <div>
-                    <span>Evidence</span>
-                    <ul>{workspace.coachResponse.coaching.evidence.map((item) => <li key={item}>{item}</li>)}</ul>
-                  </div>
-                )}
-                <footer>
-                  {workspace.coachResponse.used_llm ? workspace.coachResponse.usage?.model : 'Deterministic fallback'}
-                  {' · '}{workspace.coachResponse.tools_used.length} tools
-                  {' · '}{Math.round(workspace.coachResponse.coaching.confidence * 100)}% confidence
-                </footer>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="coach-placeholder">The coach will use engine moments, retrieved principles, and a tailored drill.</div>
-        )}
-      </section>
-    </main>
-  );
+function CoachSessionRoutePage() {
+  const { sessionId } = coachSessionRoute.useParams();
+  return <CoachWorkspacePage sessionId={sessionId} />;
 }
 
 function QualityPage() {
@@ -370,7 +348,7 @@ const rootRoute = createRootRoute({ component: AppShell });
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  beforeLoad: () => { throw redirect({ to: '/analyze' }); }
+  component: HomePage
 });
 
 const analyzeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/analyze', component: AnalyzePage });
@@ -383,10 +361,14 @@ const gameRoute = createRoute({
   }),
   component: GameReviewPage
 });
-const coachRoute = createRoute({ getParentRoute: () => rootRoute, path: '/coach', component: CoachPage });
+const coachRoute = createRoute({ getParentRoute: () => rootRoute, path: '/coach', component: CoachWorkspacePage });
+const coachSessionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/coach/$sessionId', component: CoachSessionRoutePage });
+const progressRoute = createRoute({ getParentRoute: () => rootRoute, path: '/progress', component: ProgressPage });
 const qualityRoute = createRoute({ getParentRoute: () => rootRoute, path: '/quality', component: QualityPage });
 
-const routeTree = rootRoute.addChildren([indexRoute, analyzeRoute, gamesRoute, gameRoute, coachRoute, qualityRoute]);
+const routeTree = rootRoute.addChildren([
+  indexRoute, analyzeRoute, gamesRoute, gameRoute, coachRoute, coachSessionRoute, progressRoute, qualityRoute
+]);
 
 export const router = createRouter({ routeTree, defaultPreload: 'intent', scrollRestoration: true });
 

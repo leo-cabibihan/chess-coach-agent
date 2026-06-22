@@ -10,12 +10,22 @@ the manually reviewed subset used for the published coaching-quality result belo
 
 ## Retrieval Selection
 
-| Strategy | Hit rate at 3 | Mean reciprocal rank |
-| --- | ---: | ---: |
-| Title-only baseline | 0.25 | 0.25 |
-| BM25 full-text | 1.00 | 1.00 |
+The retrieval benchmark now contains 20 hand-authored queries. It also measures source correctness
+and median local latency. Exact machine timings vary, so the checked-in JSON is the authoritative
+run artifact.
 
-BM25 won all eight queries and is the default used by `retrieve_notes`.
+| Strategy | Hit rate at 3 | MRR | Source correctness | Median latency |
+| --- | ---: | ---: | ---: | ---: |
+| Title-only | 0.35 | 0.35 | 0.65 | 0.084 ms |
+| BM25 | 0.95 | 0.858 | 0.95 | 0.124 ms |
+| Vector | 0.95 | 0.725 | 0.95 | 0.338 ms |
+| Hybrid RRF | 1.00 | 0.850 | 1.00 | 0.671 ms |
+
+Hybrid did not qualify because it missed BM25 on MRR and exceeded twice BM25's median latency.
+BM25 therefore remains the measured production default. This decision is made by code, not a
+hard-coded claim: hybrid becomes the default only when it equals or exceeds BM25 on hit rate and
+MRR while remaining below the two-times latency guardrail. See
+`backend/data/eval/retrieval_results.json` for all per-query ranks.
 
 ## MiniMax Judge and Prompt Tuning
 
@@ -35,7 +45,7 @@ Commands:
 
 ```bash
 cd backend
-uv run python -m chess_coach_agent.retrieval_evaluation --dataset data/eval/retrieval.jsonl
+uv run python -m chess_coach_agent.retrieval_evaluation --dataset data/eval/retrieval.jsonl --output data/eval/retrieval_results.json
 uv run python -m chess_coach_agent.judge_evaluation --dataset data/eval/critical_moments.jsonl --tune
 ```
 

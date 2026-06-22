@@ -51,12 +51,16 @@ def score_knowledge() -> Score:
             "docs/evaluation_results.md",
         ]
     )
-    selected = contains("backend/src/chess_coach_agent/knowledge.py", 'strategy: Literal["bm25", "title"] = "bm25"')
+    selected = contains(
+        "backend/src/chess_coach_agent/knowledge.py",
+        "production_strategy",
+        "hybrid_rrf",
+    ) and exists("backend/data/eval/retrieval_results.json")
     return Score(
         "Knowledge Base and Retrieval",
         2 if has_kb and evaluated and selected else 1 if has_kb else 0,
         2,
-        "BM25 is benchmarked against a title baseline and used by default.",
+        "Title, BM25, vector, and hybrid retrieval are benchmarked; guardrails select production retrieval.",
     )
 
 
@@ -67,6 +71,12 @@ def score_agents() -> Score:
         "inspect_critical_moments",
         "inspect_position",
         "build_training_drill",
+        "inspect_game",
+        "compare_moves",
+        "generate_position_quiz",
+        "generate_flashcards",
+        "evaluate_candidate_move",
+        "build_training_session",
     ]
     registered_tools = all(term in llm for term in tools)
     pydantic_agent = "from pydantic_ai import Agent" in llm and "output_type=CoachingOutput" in llm
@@ -76,7 +86,7 @@ def score_agents() -> Score:
         "Agents and LLM",
         points,
         3,
-        "PydanticAI lets MiniMax call four documented tools before structured answer synthesis.",
+        "PydanticAI lets MiniMax call ten documented tools before structured answer synthesis.",
     )
 
 

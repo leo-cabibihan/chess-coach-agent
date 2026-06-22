@@ -1,0 +1,861 @@
+{
+  "dataset_size": 20,
+  "winner": "bm25",
+  "production_strategy": "bm25",
+  "hybrid_qualified": false,
+  "strategies": {
+    "title": {
+      "hit_rate_at_3": 0.35,
+      "mean_reciprocal_rank": 0.35,
+      "source_correctness": 0.65,
+      "median_latency_ms": 0.083,
+      "details": [
+        {
+          "id": "forcing_moves",
+          "expected": "Tactical Vision",
+          "rank": 0,
+          "actual": [],
+          "source_correct": true
+        },
+        {
+          "id": "hanging_piece",
+          "expected": "Loose Pieces",
+          "rank": 0,
+          "actual": [],
+          "source_correct": true
+        },
+        {
+          "id": "early_queen",
+          "expected": "Opening Principles",
+          "rank": 0,
+          "actual": [],
+          "source_correct": true
+        },
+        {
+          "id": "uncastled_king",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "remove_defender",
+          "expected": "Tactical Vision",
+          "rank": 0,
+          "actual": [],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_grab",
+          "expected": "Opening Principles",
+          "rank": 0,
+          "actual": [
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "back_rank",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "skewer_target",
+          "expected": "Loose Pieces",
+          "rank": 0,
+          "actual": [],
+          "source_correct": true
+        },
+        {
+          "id": "candidate_scan",
+          "expected": "Tactical Vision",
+          "rank": 0,
+          "actual": [],
+          "source_correct": false
+        },
+        {
+          "id": "overloaded_defender",
+          "expected": "Tactical Vision",
+          "rank": 0,
+          "actual": [
+            "Loose Pieces"
+          ],
+          "source_correct": false
+        },
+        {
+          "id": "zwischenzug",
+          "expected": "Tactical Vision",
+          "rank": 0,
+          "actual": [],
+          "source_correct": false
+        },
+        {
+          "id": "piece_audit",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "attacked_twice",
+          "expected": "Loose Pieces",
+          "rank": 0,
+          "actual": [],
+          "source_correct": false
+        },
+        {
+          "id": "alignment",
+          "expected": "Loose Pieces",
+          "rank": 0,
+          "actual": [
+            "King Safety"
+          ],
+          "source_correct": false
+        },
+        {
+          "id": "develop_with_tempo",
+          "expected": "Opening Principles",
+          "rank": 0,
+          "actual": [],
+          "source_correct": false
+        },
+        {
+          "id": "same_piece_twice",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "center_control",
+          "expected": "Opening Principles",
+          "rank": 0,
+          "actual": [],
+          "source_correct": false
+        },
+        {
+          "id": "open_files_king",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_cover",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "king_escape",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety"
+          ],
+          "source_correct": true
+        }
+      ]
+    },
+    "bm25": {
+      "hit_rate_at_3": 0.95,
+      "mean_reciprocal_rank": 0.858,
+      "source_correctness": 0.95,
+      "median_latency_ms": 0.122,
+      "details": [
+        {
+          "id": "forcing_moves",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "hanging_piece",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "early_queen",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Loose Pieces",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "uncastled_king",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "remove_defender",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_grab",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "back_rank",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "skewer_target",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "candidate_scan",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "overloaded_defender",
+          "expected": "Tactical Vision",
+          "rank": 2,
+          "actual": [
+            "Loose Pieces",
+            "Tactical Vision",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "zwischenzug",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "piece_audit",
+          "expected": "Loose Pieces",
+          "rank": 0,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": false
+        },
+        {
+          "id": "attacked_twice",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "alignment",
+          "expected": "Loose Pieces",
+          "rank": 3,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "develop_with_tempo",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "same_piece_twice",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "center_control",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "open_files_king",
+          "expected": "King Safety",
+          "rank": 3,
+          "actual": [
+            "Opening Principles",
+            "Loose Pieces",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_cover",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "king_escape",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        }
+      ]
+    },
+    "vector": {
+      "hit_rate_at_3": 0.95,
+      "mean_reciprocal_rank": 0.725,
+      "source_correctness": 0.95,
+      "median_latency_ms": 0.332,
+      "details": [
+        {
+          "id": "forcing_moves",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "hanging_piece",
+          "expected": "Loose Pieces",
+          "rank": 3,
+          "actual": [
+            "Tactical Vision",
+            "Opening Principles",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "early_queen",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "uncastled_king",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "remove_defender",
+          "expected": "Tactical Vision",
+          "rank": 2,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_grab",
+          "expected": "Opening Principles",
+          "rank": 3,
+          "actual": [
+            "Loose Pieces",
+            "Tactical Vision",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "back_rank",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Tactical Vision",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "skewer_target",
+          "expected": "Loose Pieces",
+          "rank": 2,
+          "actual": [
+            "Tactical Vision",
+            "Loose Pieces",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "candidate_scan",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "overloaded_defender",
+          "expected": "Tactical Vision",
+          "rank": 3,
+          "actual": [
+            "Loose Pieces",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "zwischenzug",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "piece_audit",
+          "expected": "Loose Pieces",
+          "rank": 2,
+          "actual": [
+            "Tactical Vision",
+            "Loose Pieces",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "attacked_twice",
+          "expected": "Loose Pieces",
+          "rank": 2,
+          "actual": [
+            "Tactical Vision",
+            "Loose Pieces",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "alignment",
+          "expected": "Loose Pieces",
+          "rank": 0,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": false
+        },
+        {
+          "id": "develop_with_tempo",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "same_piece_twice",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "King Safety",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "center_control",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "open_files_king",
+          "expected": "King Safety",
+          "rank": 2,
+          "actual": [
+            "Opening Principles",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_cover",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "king_escape",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        }
+      ]
+    },
+    "hybrid": {
+      "hit_rate_at_3": 1.0,
+      "mean_reciprocal_rank": 0.85,
+      "source_correctness": 1.0,
+      "median_latency_ms": 0.625,
+      "details": [
+        {
+          "id": "forcing_moves",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "hanging_piece",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces",
+            "Tactical Vision",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "early_queen",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "uncastled_king",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "remove_defender",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "Opening Principles",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_grab",
+          "expected": "Opening Principles",
+          "rank": 2,
+          "actual": [
+            "Loose Pieces",
+            "Opening Principles",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "back_rank",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "skewer_target",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces",
+            "Tactical Vision",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "candidate_scan",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "overloaded_defender",
+          "expected": "Tactical Vision",
+          "rank": 3,
+          "actual": [
+            "Loose Pieces",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "zwischenzug",
+          "expected": "Tactical Vision",
+          "rank": 1,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "piece_audit",
+          "expected": "Loose Pieces",
+          "rank": 3,
+          "actual": [
+            "Tactical Vision",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "attacked_twice",
+          "expected": "Loose Pieces",
+          "rank": 1,
+          "actual": [
+            "Loose Pieces",
+            "Tactical Vision",
+            "Opening Principles"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "alignment",
+          "expected": "Loose Pieces",
+          "rank": 3,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "develop_with_tempo",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "same_piece_twice",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "center_control",
+          "expected": "Opening Principles",
+          "rank": 1,
+          "actual": [
+            "Opening Principles",
+            "Tactical Vision",
+            "King Safety"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "open_files_king",
+          "expected": "King Safety",
+          "rank": 2,
+          "actual": [
+            "Opening Principles",
+            "King Safety",
+            "Loose Pieces"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "pawn_cover",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        },
+        {
+          "id": "king_escape",
+          "expected": "King Safety",
+          "rank": 1,
+          "actual": [
+            "King Safety",
+            "Opening Principles",
+            "Tactical Vision"
+          ],
+          "source_correct": true
+        }
+      ]
+    }
+  }
+}

@@ -6,3 +6,15 @@
 {"id":"pawn_grab","query":"I grabbed a pawn instead of developing minor pieces and castling","expected_title":"Opening Principles"}
 {"id":"back_rank","query":"My king had no luft and was trapped by a back rank threat","expected_title":"King Safety"}
 {"id":"skewer_target","query":"An undefended rook became the target of a pin and skewer","expected_title":"Loose Pieces"}
+{"id":"candidate_scan","query":"Before moving I need a repeatable scan for checks captures and direct threats","expected_title":"Tactical Vision","expected_source":"tactical-vision.md"}
+{"id":"overloaded_defender","query":"One defender was protecting two pieces and could not do both jobs","expected_title":"Tactical Vision","expected_source":"tactical-vision.md"}
+{"id":"zwischenzug","query":"I automatically recaptured and missed an in-between forcing move","expected_title":"Tactical Vision","expected_source":"tactical-vision.md"}
+{"id":"piece_audit","query":"How can I notice pieces with no defenders before choosing a move","expected_title":"Loose Pieces","expected_source":"loose-pieces.md"}
+{"id":"attacked_twice","query":"My knight was defended once but attacked twice and I ignored it","expected_title":"Loose Pieces","expected_source":"loose-pieces.md"}
+{"id":"alignment","query":"My queen and rook lined up with my king and allowed a skewer","expected_title":"Loose Pieces","expected_source":"loose-pieces.md"}
+{"id":"develop_with_tempo","query":"I need to bring out knights and bishops while making useful threats","expected_title":"Opening Principles","expected_source":"opening-principles.md"}
+{"id":"same_piece_twice","query":"I wasted opening tempi moving one developed piece again and again","expected_title":"Opening Principles","expected_source":"opening-principles.md"}
+{"id":"center_control","query":"I gave away the center before completing development","expected_title":"Opening Principles","expected_source":"opening-principles.md"}
+{"id":"open_files_king","query":"Opening lines near my own king made every enemy rook and queen dangerous","expected_title":"King Safety","expected_source":"king-safety.md"}
+{"id":"pawn_cover","query":"I weakened the pawns sheltering my castled king without a concrete reason","expected_title":"King Safety","expected_source":"king-safety.md"}
+{"id":"king_escape","query":"My king needed an escape square before the opponent used a mating net","expected_title":"King Safety","expected_source":"king-safety.md"}

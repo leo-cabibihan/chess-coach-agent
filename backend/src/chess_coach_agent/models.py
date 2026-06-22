@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -68,6 +68,7 @@ class AnalyzeRequest(BaseModel):
     pgn: str
     player: str = "kfctofu"
     max_games: int = 1
+    platform: Literal["chess.com", "lichess", "pgn"] = "pgn"
 
 
 class AnalyzeResponse(BaseModel):
@@ -113,6 +114,8 @@ class ChatResponse(BaseModel):
     tools_used: list[str] = Field(default_factory=list)
     usage: ModelUsage | None = None
     trace_id: str | None = None
+    panel: dict[str, Any] | None = None
+    message_history: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ImportRequest(BaseModel):
@@ -165,3 +168,158 @@ class TrendSummary(BaseModel):
     record: dict[str, int]
     themes: dict[str, int]
     recent: list[TrendPoint]
+
+
+Platform = Literal["chess.com", "lichess", "pgn"]
+Difficulty = Literal["beginner", "intermediate", "advanced"]
+
+
+class PlayerProfile(BaseModel):
+    id: str
+    platform: Platform
+    username: str
+    current_rating: int | None = None
+    recurring_themes: dict[str, float] = Field(default_factory=dict)
+    quiz_accuracy: dict[str, float] = Field(default_factory=dict)
+    mastered_positions: int = 0
+    due_positions: int = 0
+
+
+class BoardPanel(BaseModel):
+    type: Literal["board"] = "board"
+    fen: str
+    title: str
+    description: str = ""
+
+
+class QuizPanel(BaseModel):
+    type: Literal["quiz"] = "quiz"
+    training_session_id: str
+    position_id: str
+    fen: str
+    question: str
+    choices: list[str] = Field(default_factory=list)
+    theme: str
+    difficulty: Difficulty
+    hint: str | None = None
+
+
+class FlashcardItem(BaseModel):
+    id: str
+    fen: str
+    prompt: str
+    answer: str
+    theme: str
+
+
+class FlashcardsPanel(BaseModel):
+    type: Literal["flashcards"] = "flashcards"
+    title: str
+    cards: list[FlashcardItem]
+
+
+class EvaluationPanel(BaseModel):
+    type: Literal["evaluation"] = "evaluation"
+    position_id: str
+    fen: str
+    submitted_move: str
+    best_move: str
+    legal: bool
+    correct: bool
+    cp_loss: float | None = None
+    explanation: str
+    next_review_at: datetime
+
+
+class PlanPanel(BaseModel):
+    type: Literal["plan"] = "plan"
+    training_session_id: str
+    focus_themes: list[str]
+    difficulty: Difficulty
+    position_count: int
+    estimated_minutes: int
+
+
+CoachPanel = Annotated[
+    BoardPanel | QuizPanel | FlashcardsPanel | EvaluationPanel | PlanPanel,
+    Field(discriminator="type"),
+]
+
+
+class CoachSessionCreate(BaseModel):
+    platform: Platform = "chess.com"
+    username: str = "kfctofu"
+    focus_theme: str | None = None
+
+
+class CoachMessageCreate(BaseModel):
+    content: str = Field(min_length=1, max_length=4000)
+
+
+class CoachMessageView(BaseModel):
+    id: str
+    sequence: int
+    role: Literal["user", "assistant"]
+    content: str
+    trace_id: str | None = None
+    created_at: datetime
+
+
+class CoachSessionView(BaseModel):
+    id: str
+    player: PlayerProfile
+    status: str
+    focus_theme: str
+    summary: str = ""
+    messages: list[CoachMessageView] = Field(default_factory=list)
+    active_panel: CoachPanel | None = None
+    created_at: datetime
+
+
+class CoachMessageAccepted(BaseModel):
+    message_id: str
+    session_id: str
+
+
+class TrainingSessionCreate(BaseModel):
+    platform: Platform = "chess.com"
+    username: str = "kfctofu"
+    theme: str | None = None
+    position_count: int = Field(default=5, ge=1, le=10)
+
+
+class TrainingPositionView(BaseModel):
+    id: str
+    order: int
+    fen: str
+    choices: list[str]
+    theme: str
+    difficulty: Difficulty
+    prompt: str = "What would you play?"
+
+
+class TrainingSessionView(BaseModel):
+    id: str
+    player_id: str
+    focus_themes: list[str]
+    difficulty: Difficulty
+    status: str
+    positions: list[TrainingPositionView]
+
+
+class QuizAttemptCreate(BaseModel):
+    position_id: str
+    move: str
+    hints_used: int = Field(default=0, ge=0, le=5)
+    elapsed_ms: int = Field(default=0, ge=0)
+
+
+class ProgressSummary(BaseModel):
+    player: PlayerProfile
+    total_games: int
+    record: dict[str, int]
+    rating_history: list[dict[str, Any]]
+    theme_frequency: dict[str, int]
+    quiz_accuracy: dict[str, float]
+    recent_attempts: int
+    transfer_score: float | None = None

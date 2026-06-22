@@ -6,10 +6,12 @@ PydanticAI runs are instrumented with Logfire and grouped under a `coach_session
 
 The React **Quality monitoring** dashboard calls `GET /api/monitoring` and displays total events,
 completed analyses, LLM calls, input/output tokens, estimated model cost, average chat latency,
-feedback volume, helpful rate, tool usage, and event-count bars.
+feedback volume, helpful rate, tool usage, stream failures, training sessions, quiz accuracy, hint
+use, retrieval method, memory retrieval, and event-count bars.
 
 Recorded events include `analysis_requested`, `analysis_completed`, `games_previewed`, `games_imported`,
-`chat_requested`, `chat_completed`, and `moment_feedback`. Chat completion events record whether the
+`chat_requested`, `chat_completed`, `coach_session_started`, `coach_turn_completed`,
+`training_session_created`, `quiz_attempted`, `memory_retrieved`, and `moment_feedback`. Chat completion events record whether the
 OpenRouter model was used, its model usage, estimated cost, executed tools, trace ID, and latency.
 Analysis completion events record game, moment, theme, and timing data.
 

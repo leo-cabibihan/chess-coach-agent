@@ -109,6 +109,87 @@ export type ChatResponse = {
     estimated_cost_usd: number;
   } | null;
   trace_id: string | null;
+  panel?: CoachPanel | null;
+};
+
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
+
+export type PlayerProfile = {
+  id: string;
+  platform: Platform | 'pgn';
+  username: string;
+  current_rating: number | null;
+  recurring_themes: Record<string, number>;
+  quiz_accuracy: Record<string, number>;
+  mastered_positions: number;
+  due_positions: number;
+};
+
+export type CoachPanel =
+  | { type: 'board'; fen: string; title: string; description: string }
+  | {
+      type: 'quiz'; training_session_id: string; position_id: string; fen: string;
+      question: string; choices: string[]; theme: string; difficulty: Difficulty; hint: string | null;
+    }
+  | { type: 'flashcards'; title: string; cards: Array<{ id: string; fen: string; prompt: string; answer: string; theme: string }> }
+  | {
+      type: 'evaluation'; position_id: string; fen: string; submitted_move: string;
+      best_move: string; legal: boolean; correct: boolean; cp_loss: number | null;
+      explanation: string; next_review_at: string;
+    }
+  | {
+      type: 'plan'; training_session_id: string; focus_themes: string[];
+      difficulty: Difficulty; position_count: number; estimated_minutes: number;
+    };
+
+export type CoachMessage = {
+  id: string;
+  sequence: number;
+  role: 'user' | 'assistant';
+  content: string;
+  trace_id: string | null;
+  created_at: string;
+};
+
+export type CoachSession = {
+  id: string;
+  player: PlayerProfile;
+  status: string;
+  focus_theme: string;
+  summary: string;
+  messages: CoachMessage[];
+  active_panel: CoachPanel | null;
+  created_at: string;
+};
+
+export type TrainingPosition = {
+  id: string;
+  order: number;
+  fen: string;
+  choices: string[];
+  theme: string;
+  difficulty: Difficulty;
+  prompt: string;
+};
+
+export type TrainingSession = {
+  id: string;
+  player_id: string;
+  focus_themes: string[];
+  difficulty: Difficulty;
+  status: string;
+  positions: TrainingPosition[];
+};
+
+export type ProgressSummary = {
+  player: PlayerProfile;
+  total_games: number;
+  record: Record<string, number>;
+  rating_history: Array<{ date: string; rating: number; result: string }>;
+  theme_frequency: Record<string, number>;
+  quiz_accuracy: Record<string, number>;
+  recent_attempts: number;
+  transfer_score: number | null;
 };
 
 export type MonitoringSummary = {
@@ -123,5 +204,12 @@ export type MonitoringSummary = {
   estimated_cost_usd: number;
   average_chat_latency_ms: number | null;
   tool_usage: Record<string, number>;
+  stream_failures: number;
+  training_sessions: number;
+  quiz_attempts: number;
+  quiz_accuracy: number | null;
+  hint_use_rate: number | null;
+  retrieval_methods: Record<string, number>;
+  memory_retrievals: number;
   recent_events: Array<Record<string, unknown>>;
 };

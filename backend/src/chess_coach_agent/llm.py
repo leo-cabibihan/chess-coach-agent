@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import asyncio
 import uuid
 from dataclasses import dataclass, field
 from textwrap import dedent
@@ -11,12 +12,21 @@ import httpx
 import logfire
 from dotenv import load_dotenv
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.messages import ModelMessagesTypeAdapter
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from .engine import EngineAnalyzer
 from .knowledge import retrieve_notes
-from .models import ChatResponse, CoachAnalysis, CoachingOutput, ModelUsage
+from .models import ChatResponse, CoachAnalysis, CoachPanel, CoachingOutput, ModelUsage
+from .coach_tools import (
+    build_training_session,
+    compare_moves,
+    evaluate_candidate_move,
+    generate_flashcards,
+    generate_position_quiz,
+    inspect_game,
+)
 
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -34,6 +44,11 @@ logfire.instrument_pydantic_ai()
 @dataclass
 class CoachDependencies:
     analysis: CoachAnalysis | None = None
+    player_id: str | None = None
+    platform: str | None = None
+    username: str | None = None
+    session_id: str | None = None
+    panel: CoachPanel | None = None
     tools_used: list[str] = field(default_factory=list)
     retrieved_titles: list[str] = field(default_factory=list)
 
@@ -126,7 +141,9 @@ COACH_INSTRUCTIONS = dedent(
     You are a precise chess improvement coach. Use at least two tools before answering.
     Treat engine evaluations, legal moves, and supplied game facts as evidence; never invent a
     variation or claim a move is forced without support. Separate what the player did from the
-    reusable lesson. Give one manageable drill. Return the requested structured coaching object.
+    reusable lesson. Give one manageable drill. When the user asks to practice, create a position
+    quiz or training session from their stored games. Use saved-game tools instead of inventing
+    positions. Return the requested structured coaching object.
     """
 ).strip()
 
@@ -143,12 +160,18 @@ def create_coach_agent(model: Any = None) -> Agent[CoachDependencies, CoachingOu
             inspect_critical_moments,
             inspect_position,
             build_training_drill,
+            inspect_game,
+            compare_moves,
+            generate_position_quiz,
+            generate_flashcards,
+            evaluate_candidate_move,
+            build_training_session,
         ],
         retries=2,
     )
 
 
-def _analysis_prompt(question: str, analysis: CoachAnalysis | None) -> str:
+def _analysis_prompt(question: str, analysis: CoachAnalysis | None, memory_context: str = "") -> str:
     if not analysis:
         context = "No analyzed game was supplied. Use retrieved principles and state that limitation."
     else:
@@ -164,10 +187,15 @@ def _analysis_prompt(question: str, analysis: CoachAnalysis | None) -> str:
             {moments}
             """
         ).strip()
-    return f"Question:\n{question}\n\nVerified game context:\n{context}"
+    memory = f"\n\nVerified player memory:\n{memory_context}" if memory_context else ""
+    return f"Question:\n{question}\n\nVerified game context:\n{context}{memory}"
 
 
-def _fallback_coaching(question: str, analysis: CoachAnalysis | None) -> tuple[CoachingOutput, list[str], list[str]]:
+def _fallback_coaching(
+    question: str,
+    analysis: CoachAnalysis | None,
+    memory_context: str = "",
+) -> tuple[CoachingOutput, list[str], list[str]]:
     notes = retrieve_notes(question, top_k=3)
     if analysis and analysis.moments:
         moment = analysis.moments[0]
@@ -185,8 +213,14 @@ def _fallback_coaching(question: str, analysis: CoachAnalysis | None) -> tuple[C
         )
         return coaching, ["inspect_critical_moments", "build_training_drill"], [note.title for note in notes]
     principle = notes[0].snippet if notes else "Start with checks, captures, and threats."
+    answer = (
+        "Your stored profile points to these priorities: "
+        + memory_context.replace("\n", " ")
+        if memory_context
+        else "Analyze or select a game so I can ground the answer in your positions."
+    )
     coaching = CoachingOutput(
-        answer="Analyze or select a game so I can ground the answer in your positions.",
+        answer=answer,
         evidence=[principle],
         recommended_move=None,
         principle=principle,
@@ -207,11 +241,21 @@ def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
     return round((input_tokens * input_rate + output_tokens * output_rate) / 1_000_000, 8)
 
 
-async def answer_question(question: str, analysis: CoachAnalysis | None) -> ChatResponse:
+async def answer_question(
+    question: str,
+    analysis: CoachAnalysis | None,
+    *,
+    player_id: str | None = None,
+    platform: str | None = None,
+    username: str | None = None,
+    session_id: str | None = None,
+    message_history: list[dict[str, Any]] | None = None,
+    memory_context: str = "",
+) -> ChatResponse:
     trace_id = uuid.uuid4().hex
     model = _openrouter_model()
     if model is None:
-        coaching, tools_used, titles = _fallback_coaching(question, analysis)
+        coaching, tools_used, titles = _fallback_coaching(question, analysis, memory_context)
         return ChatResponse(
             answer=coaching.answer,
             coaching=coaching,
@@ -221,7 +265,14 @@ async def answer_question(question: str, analysis: CoachAnalysis | None) -> Chat
             trace_id=trace_id,
         )
 
-    deps = CoachDependencies(analysis=analysis)
+    deps = CoachDependencies(
+        analysis=analysis,
+        player_id=player_id,
+        platform=platform,
+        username=username,
+        session_id=session_id,
+    )
+    history = ModelMessagesTypeAdapter.validate_python(message_history) if message_history else None
     try:
         with logfire.span(
             "coach_session",
@@ -229,7 +280,14 @@ async def answer_question(question: str, analysis: CoachAnalysis | None) -> Chat
             model=_model_name(),
             has_analysis=analysis is not None,
         ):
-            result = await create_coach_agent(model).run(_analysis_prompt(question, analysis), deps=deps)
+            result = await asyncio.wait_for(
+                create_coach_agent(model).run(
+                    _analysis_prompt(question, analysis, memory_context),
+                    deps=deps,
+                    message_history=history,
+                ),
+                timeout=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "20")),
+            )
         usage = result.usage
         model_usage = ModelUsage(
             model=_model_name(),
@@ -248,10 +306,14 @@ async def answer_question(question: str, analysis: CoachAnalysis | None) -> Chat
             retrieved_notes=list(dict.fromkeys(deps.retrieved_titles)),
             usage=model_usage,
             trace_id=trace_id,
+            panel=deps.panel.model_dump(mode="json") if deps.panel else None,
+            message_history=ModelMessagesTypeAdapter.dump_python(
+                result.all_messages(), mode="json"
+            ),
         )
     except Exception as exc:
         logfire.warn("coach_session_failed", trace_id=trace_id, error=str(exc))
-        coaching, tools_used, titles = _fallback_coaching(question, analysis)
+        coaching, tools_used, titles = _fallback_coaching(question, analysis, memory_context)
         return ChatResponse(
             answer=coaching.answer,
             coaching=coaching,

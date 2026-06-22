@@ -23,9 +23,11 @@ WORKDIR /app/backend
 COPY backend/pyproject.toml ./
 COPY backend/src ./src
 COPY backend/data ./data
+COPY backend/alembic.ini ./
+COPY backend/migrations ./migrations
 RUN uv pip install --system -e .
 
 COPY --from=frontend-build /build/frontend/dist /app/frontend/dist
 
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn chess_coach_agent.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "alembic upgrade head && python -m chess_coach_agent.ingest_knowledge && uvicorn chess_coach_agent.api:app --host 0.0.0.0 --port ${PORT:-8000}"]

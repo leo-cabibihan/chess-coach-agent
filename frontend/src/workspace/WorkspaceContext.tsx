@@ -43,6 +43,7 @@ type WorkspaceContextValue = {
   ask: (question: string) => Promise<void>;
   recordFeedback: (moment: CriticalMoment, rating: 'helpful' | 'not_helpful') => Promise<void>;
   clearFeedbackStatus: () => void;
+  restoreAnalyses: (items: CoachAnalysis[]) => void;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -101,7 +102,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setError('');
     setStatus('Analyzing pasted PGN...');
     try {
-      const result = await analyzeGames(pgn, player, 20);
+      const result = await analyzeGames(pgn, player, 20, 'pgn');
       setAnalyses(result.analyses);
       const first = result.analyses[0] || null;
       if (first) openGame(first.game.game_id);
@@ -160,7 +161,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setError('');
     setStatus(`Analyzing ${selected.length} selected games...`);
     try {
-      const result = await analyzeGames(selected.map((game) => game.pgn).join('\n\n'), player, selected.length);
+      const result = await analyzeGames(selected.map((game) => game.pgn).join('\n\n'), player, selected.length, platform);
       setAnalyses(result.analyses);
       const first = result.analyses[0] || null;
       if (first) openGame(first.game.game_id);
@@ -216,6 +217,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       toggleGameSelection, selectAllGames, clearGameSelection: () => setSelectedGameIds([]),
       analyzeSelectedGames, ask,
       recordFeedback, clearFeedbackStatus: () => setFeedbackStatus('')
+      , restoreAnalyses: (items) => {
+        setAnalyses(items);
+        if (items.length && !activeGameId) setActiveGameId(items[0].game.game_id);
+      }
     }}>
       {children}
     </WorkspaceContext.Provider>

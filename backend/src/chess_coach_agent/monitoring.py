@@ -53,6 +53,21 @@ def monitoring_summary() -> dict[str, Any]:
     output_tokens = sum((event.get("usage") or {}).get("output_tokens", 0) for event in chats)
     estimated_cost = sum((event.get("usage") or {}).get("estimated_cost_usd", 0) for event in chats)
     chat_latency = [event.get("duration_ms", 0) for event in chats if event.get("duration_ms") is not None]
+    attempts = [event for event in events if event.get("event_type") == "quiz_attempted"]
+    training_sessions = [
+        event for event in events if event.get("event_type") == "training_session_created"
+    ]
+    stream_failures = event_counts["stream_failed"]
+    correct_attempts = sum(bool(event.get("correct")) for event in attempts)
+    hinted_attempts = sum(int(event.get("hints_used", 0)) > 0 for event in attempts)
+    retrieval_methods = Counter(
+        event.get("method", "unknown")
+        for event in events
+        if event.get("event_type") == "retrieval_completed"
+    )
+    memory_retrievals = [
+        event for event in events if event.get("event_type") == "memory_retrieved"
+    ]
     return {
         "total_events": len(events),
         "event_counts": dict(event_counts),
@@ -65,6 +80,13 @@ def monitoring_summary() -> dict[str, Any]:
         "estimated_cost_usd": round(estimated_cost, 8),
         "average_chat_latency_ms": round(sum(chat_latency) / len(chat_latency), 2) if chat_latency else None,
         "tool_usage": dict(tool_usage),
+        "stream_failures": stream_failures,
+        "training_sessions": len(training_sessions),
+        "quiz_attempts": len(attempts),
+        "quiz_accuracy": round(correct_attempts / len(attempts), 3) if attempts else None,
+        "hint_use_rate": round(hinted_attempts / len(attempts), 3) if attempts else None,
+        "retrieval_methods": dict(retrieval_methods),
+        "memory_retrievals": len(memory_retrievals),
         "recent_events": list(reversed(events[-8:])),
     }
 

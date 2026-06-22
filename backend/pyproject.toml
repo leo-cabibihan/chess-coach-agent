@@ -12,6 +12,11 @@ dependencies = [
   "python-dotenv>=1.0.1",
   "pydantic-ai-slim[openai]>=1.32.0",
   "logfire>=4.16.0",
+  "sqlalchemy>=2.0",
+  "alembic>=1.13",
+  "psycopg[binary]>=3.2",
+  "pgvector>=0.3",
+  "fastembed>=0.5",
 ]
 
 [project.optional-dependencies]

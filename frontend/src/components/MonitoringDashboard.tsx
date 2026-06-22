@@ -48,6 +48,16 @@ export function MonitoringDashboard({ refreshKey }: { refreshKey: number }) {
               <span>Chat latency</span>
             </div>
             <div><strong>{summary.llm_calls}</strong><span>LLM calls</span></div>
+            <div><strong>{summary.quiz_attempts}</strong><span>Quiz attempts</span></div>
+            <div>
+              <strong>{summary.quiz_accuracy === null ? 'N/A' : `${Math.round(summary.quiz_accuracy * 100)}%`}</strong>
+              <span>Quiz accuracy</span>
+            </div>
+            <div>
+              <strong>{summary.hint_use_rate === null ? 'N/A' : `${Math.round(summary.hint_use_rate * 100)}%`}</strong>
+              <span>Hint use</span>
+            </div>
+            <div><strong>{summary.stream_failures}</strong><span>Stream failures</span></div>
           </div>
           <div className="event-bars">
             {eventRows.map((row) => (

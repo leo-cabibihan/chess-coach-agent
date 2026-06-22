@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -22,10 +23,20 @@ from .models import (
     ImportRequest,
 )
 from .monitoring import log_event, monitoring_summary
+from .adaptive_api import router as adaptive_router
+from .db import init_db, session_scope
+from .repositories import persist_analyses
 
 
-app = FastAPI(title="Chess Coach Agent API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="Chess Coach Agent API", version="0.2.0", lifespan=lifespan)
 agent = ChessCoachAgent()
+app.include_router(adaptive_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +62,8 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     log_event("analysis_requested", {"player": request.player, "max_games": request.max_games})
     started = time.perf_counter()
     response = agent.import_pgn_text(request.pgn, player=request.player, max_games=request.max_games)
+    with session_scope() as session:
+        persist_analyses(session, request.platform, request.player, response)
     log_event(
         "analysis_timing",
         {"duration_ms": round((time.perf_counter() - started) * 1000, 2), "games": len(response.analyses)},
@@ -60,7 +73,10 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
 
 @app.post("/api/import", response_model=AnalyzeResponse)
 async def import_games(request: ImportRequest) -> AnalyzeResponse:
-    return await agent.import_platform_games(request)
+    response = await agent.import_platform_games(request)
+    with session_scope() as session:
+        persist_analyses(session, request.platform, request.username, response)
+    return response
 
 
 @app.post("/api/games/preview", response_model=GamePreviewResponse)

@@ -36,4 +36,10 @@ def test_agent_exposes_all_chess_coaching_tools():
         "inspect_critical_moments",
         "inspect_position",
         "build_training_drill",
+        "inspect_game",
+        "compare_moves",
+        "generate_position_quiz",
+        "generate_flashcards",
+        "evaluate_candidate_move",
+        "build_training_session",
     }
