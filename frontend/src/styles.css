@@ -1050,6 +1050,111 @@ textarea {
 .text-action { margin-top: 10px; padding: 8px 0; background: transparent; color: #397c57; }
 .quiz-hint { padding: 12px; border-left: 3px solid #d9a536; background: #fff9e9; }
 
+.gesture-control {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e3ebe6;
+}
+
+.gesture-control-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gesture-control-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.gesture-toggle.active {
+  border-color: #397c57;
+  background: #eef7f1;
+  color: #245a3d;
+}
+
+.gesture-control-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.gesture-preview-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #d5e0da;
+  background: #1a2420;
+  aspect-ratio: 4 / 3;
+}
+
+.gesture-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.gesture-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 10px 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+}
+
+.gesture-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f4f7f5;
+  font-size: 13px;
+}
+
+.gesture-status.live { color: #b8f0cb; }
+.gesture-status.error { color: #ffb4b4; }
+
+.gesture-hints {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gesture-hints li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #e1e9e4;
+  border-radius: 6px;
+  background: #fafcfb;
+}
+
+.gesture-hints li.active {
+  border-color: #397c57;
+  background: #eef7f1;
+}
+
+.gesture-hints strong {
+  font-size: 13px;
+  color: #2a3b32;
+}
+
+.gesture-hints span {
+  font-size: 12px;
+  color: #66746c;
+}
+
+.gesture-note {
+  margin: 0;
+  font-size: 12px;
+  color: #728079;
+}
+
 .evaluation-status {
   display: flex;
   justify-content: space-between;
