@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/chess-coach-agent
     services:
       postgres:
         image: pgvector/pgvector:pg16
