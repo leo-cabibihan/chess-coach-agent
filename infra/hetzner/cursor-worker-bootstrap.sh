@@ -5,8 +5,8 @@ set -euo pipefail
 
 WORKER_NAME="${WORKER_NAME:-cursor-devbox}"
 WORKER_USER="${WORKER_USER:-ubuntu}"
-REPO_URL="${REPO_URL:-https://github.com/leo-cabibihan/chess-coach-agent.git}"
-REPO_DIR="${REPO_DIR:-/home/${WORKER_USER}/chess-coach-agent}"
+REPO_URL="${REPO_URL:-https://github.com/leo-cabibihan/workspace.git}"
+REPO_DIR="${REPO_DIR:-/home/${WORKER_USER}/workspace}"
 INSTALL_TAILSCALE="${INSTALL_TAILSCALE:-false}"
 
 log() { printf '[bootstrap] %s\n' "$*"; }

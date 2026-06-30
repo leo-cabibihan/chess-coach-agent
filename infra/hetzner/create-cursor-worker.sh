@@ -9,7 +9,7 @@ LOCATION="${LOCATION:-nbg1}"
 IMAGE="${IMAGE:-ubuntu-24.04}"
 SSH_KEY_NAME="${SSH_KEY_NAME:-}"
 WORKER_NAME="${WORKER_NAME:-cursor-devbox}"
-REPO_URL="${REPO_URL:-https://github.com/leo-cabibihan/chess-coach-agent.git}"
+REPO_URL="${REPO_URL:-https://github.com/leo-cabibihan/workspace.git}"
 INSTALL_TAILSCALE="${INSTALL_TAILSCALE:-false}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

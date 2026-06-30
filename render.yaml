@@ -3,8 +3,8 @@ services:
     name: chess-coach-agent
     runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./apps/chess-coach-agent/Dockerfile
+    dockerContext: ./apps/chess-coach-agent
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL

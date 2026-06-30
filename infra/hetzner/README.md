@@ -22,14 +22,16 @@ sudo tar -C /usr/local/bin --no-same-owner -xzf hcloud-linux-amd64.tar.gz hcloud
 
 ### 2. Create the worker VM
 
+From the **workspace repo root**:
+
 ```bash
 export HCLOUD_TOKEN="your-hetzner-api-token"
 export SSH_KEY_NAME="your-ssh-key-name-in-hetzner"
 
-bash scripts/hetzner/create-cursor-worker.sh
+bash infra/hetzner/create-cursor-worker.sh
 ```
 
-Defaults: `cx32` in `nbg1`, repo `chess-coach-agent`, worker name `cursor-devbox`.
+Defaults: `cx32` in `nbg1`, repo [`workspace`](https://github.com/leo-cabibihan/workspace), worker name `cursor-devbox`.
 
 ### 3. One-time Cursor login on the VM
 
@@ -42,7 +44,7 @@ systemctl start cursor-worker
 ### 4. Use from phone
 
 1. Open **Cursor iOS**
-2. Start an agent on your repo
+2. Start an agent → pick repo **`workspace`**
 3. Choose **My Machines** → `cursor-devbox`
 
 Or on desktop: enable **Settings → Agents → Remote Control**, then `/remote-control` in a session.
@@ -50,7 +52,7 @@ Or on desktop: enable **Settings → Agents → Remote Control**, then `/remote-
 ## Manual bootstrap (existing VM)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/leo-cabibihan/chess-coach-agent/main/scripts/hetzner/cursor-worker-bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/leo-cabibihan/workspace/main/infra/hetzner/cursor-worker-bootstrap.sh | sudo bash
 ```
 
 ## Limits reminder
