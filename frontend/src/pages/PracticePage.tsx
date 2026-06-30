@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowRight, CheckCircle2, Loader2, RotateCcw, Target } from 'lucide-react';
 import { ChessBoard } from '../components/ChessBoard';
+import { GestureControl } from '../components/GestureControl';
+import type { GestureAction } from '../gestures/gestureActions';
 import {
   createTrainingSession,
   getTrainingSession,
@@ -19,6 +21,7 @@ export function PracticePage({ sessionId }: { sessionId?: string }) {
   const [evaluation, setEvaluation] = useState<EvaluationPanel | null>(null);
   const [busy, setBusy] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
+  const [gesturesEnabled, setGesturesEnabled] = useState(false);
   const started = useMemo(() => Date.now(), [index, sessionId]);
   const training = useQuery({
     queryKey: ['training-session', sessionId],
@@ -53,6 +56,43 @@ export function PracticePage({ sessionId }: { sessionId?: string }) {
       setBusy(false);
     }
   }
+
+  const handleGestureAction = useCallback((action: GestureAction) => {
+    if (busy) return;
+
+    if (action.type === 'show_hint') {
+      setHintOpen(true);
+      return;
+    }
+
+    if (action.type === 'retry') {
+      setEvaluation(null);
+      return;
+    }
+
+    if (action.type === 'next') {
+      if (!training.data || index + 1 >= training.data.positions.length) {
+        void navigate({ to: '/progress' });
+        return;
+      }
+      setIndex((value) => value + 1);
+      setMove('');
+      setEvaluation(null);
+      setHintOpen(false);
+      return;
+    }
+
+    if (evaluation) return;
+
+    if (action.type === 'submit_choice' && position?.choices[action.index]) {
+      void submit(position.choices[action.index]);
+      return;
+    }
+
+    if (action.type === 'submit_move' && move.trim()) {
+      void submit(move.trim());
+    }
+  }, [busy, evaluation, index, move, navigate, position?.choices, training.data]);
 
   function next() {
     if (!training.data || index + 1 >= training.data.positions.length) {
@@ -96,6 +136,15 @@ export function PracticePage({ sessionId }: { sessionId?: string }) {
           {position.hint && position.difficulty === 'beginner' && !hintOpen && <button className="text-action" onClick={() => setHintOpen(true)}>Show hint</button>}
           {hintOpen && position.hint && <p className="quiz-hint">{position.hint}</p>}
         </>}
+        <GestureControl
+          enabled={gesturesEnabled}
+          onToggle={setGesturesEnabled}
+          phase={evaluation ? 'evaluated' : 'answering'}
+          choiceCount={position.choices.length}
+          hasHint={Boolean(position.hint && position.difficulty === 'beginner' && !hintOpen)}
+          hasMoveText={Boolean(move.trim())}
+          onAction={handleGestureAction}
+        />
       </div>
     </section>
   </main>;
